@@ -17,6 +17,9 @@ from celery import shared_task, Task
 from nada.nada_celery import celery
 from nada.redis import short_region, mid_region, long_region
 
+from pydantic_ai.ext.langchain import tool_from_langchain
+from yada.tools.shell import bash_shell
+
 @shared_task
 def add(x, y):
     return x + y

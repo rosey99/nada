@@ -32,7 +32,8 @@ dependencies = [
     "dogpile.cache>=1.5.0",
     #"yada @ git+ssh://git@github.com/rosey99/yada.git",
     "python-dotenv>=0.9.9",
-    "pydantic-ai<=2.9.0"
+    "pydantic-ai<=2.9.0",
+    "pydantic-ai-harness>=0.6.0"
 ]
 
 [project.optional-dependencies]

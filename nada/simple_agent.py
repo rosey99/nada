@@ -17,30 +17,72 @@ from pydantic_ai.models import ModelSettings
 from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
+from pydantic_ai.ext.langchain import tool_from_langchain
+
+from nada.llm.locals import get_available_llama_models, get_llama_model, ProviderCollection
+from nada.models import ModelProvider
+
+from yada.tools.shell import bash_shell, CommandCollection, ShellTool
 
 #model_settings = OpenAIChatModelSettings({'reasoning': 'off'})
 
-model = OpenAIChatModel(
-    'unsloth/gemma-4-E4B-it-GGUF:Q8_K_XL',
-    #'Jackrong/Qwen3.5-9B-DeepSeek-V4-Flash-MTP-GGUF:Q8_0',
-    #'yuxinlu1/gemma-4-12B-coder-fable5-composer2.5-v1-GGUF:Q6_K',
-    #'s-batman/ornith-1.0-35B-NVFP4-MTP-GGUF:MTP',
-    #'unsloth/Qwen3.5-4B-MTP-GGUF:Q8_0',
-    #'unsloth/Qwen3.5-9B-MTP-GGUF:Q8_K_XL',
-    provider=OpenAIProvider(
-        base_url='http://192.168.1.39:8080/v1',
-        #base_url='http://127.0.0.1:8080/v1',
-        api_key='your-api-key',
-    ),
-    settings = ModelSettings(thinking=False)
-)
+local_providers = [
+    {'name': "Local LTV LLM",
+     'prompt_url': "http://192.168.1.39:8080/v1",
+     'models_url': "http://192.168.1.39:8080/models",
+     'load_url': "http://192.168.1.39:8080/load",
+     'support_autoload': True,
+     'get_available_models': get_available_llama_models,
+     'get_model': get_llama_model,
+     },
+     {'name': "Local SlowBig LLM",
+      'prompt_url': "http://127.0.0.1:8080/v1",
+      'models_url': "http://127.0.0.1:8080/models",
+      'load_url': "http://127.0.0.1:8080/load",
+      'support_autoload': True,
+      'get_available_models': get_available_llama_models,
+      'get_model': get_llama_model,
+      },
+
+]
+providers = ProviderCollection(provider_list=local_providers)
+#provider = ModelProvider(**local_providers[0])
+# modifies in place and returns
+providers.refresh_provider()
+#get_available_llama_models(provider=provider)
+provider = providers.providers['Local LTV LLM']
+use_model = None
+for model in provider.models:
+    # get the loaded model
+    if model.model_status == 'loaded':
+        use_model = get_llama_model(model_id=model.id, provider=provider)
+        print('Found loaded model: ', model.id, model.model_status)
+        print(f'Context: {model.model_args.ctx_size}')
+if not use_model:
+    use_model = providers.get_model_obj(model_id='unsloth/gemma-4-E4B-it-GGUF:Q8_K_XL', provider_name=provider.name)
+model = use_model
+
+# model = OpenAIChatModel(
+#     'unsloth/gemma-4-E4B-it-GGUF:Q8_K_XL',
+#     #'Jackrong/Qwen3.5-9B-DeepSeek-V4-Flash-MTP-GGUF:Q8_0',
+#     #'yuxinlu1/gemma-4-12B-coder-fable5-composer2.5-v1-GGUF:Q6_K',
+#     #'s-batman/ornith-1.0-35B-NVFP4-MTP-GGUF:MTP',
+#     #'unsloth/Qwen3.5-4B-MTP-GGUF:Q8_0',
+#     #'unsloth/Qwen3.5-9B-MTP-GGUF:Q8_K_XL',
+#     provider=OpenAIProvider(
+#         base_url='http://192.168.1.39:8080/v1',
+#         #base_url='http://127.0.0.1:8080/v1',
+#         api_key='your-api-key',
+#     ),
+#     settings = ModelSettings(thinking=False)
+# )
 
 agent = Agent(
     model,
     # 'anthropic:claude-sonnet-4-6',
-    instructions='Be concise, reply with one sentence.',
+    instructions='You are a helpful and concise assistant.',
     #capabilities=[Thinking(), WebSearch(local='duckduckgo')],
-    tools=[duckduckgo_search_tool(), web_fetch_tool(max_content_length=None)],
+    tools=[duckduckgo_search_tool(), web_fetch_tool(max_content_length=None), tool_from_langchain(ShellTool())],
     #model_settings=
 )
 
@@ -126,9 +168,13 @@ def main() -> None:
 #     print()
 #     print(f"There are currently {openmodels['count']} OpenRouter (free!) models available :)")
 #     # Print welcome message
-#     print("\n🌐 Agent is ready! Ask questions about the internet.")
-#     print("\nType 'ctrl-c', 'quit' or 'exit' to stop the agent.")
-#     print()
+    print("\n🌐 Agent is ready! Ask questions about the internet.")
+    print("\nType 'ctrl-c', 'quit' or 'exit' to stop the agent.")
+    print()
+    for provider_name, provider in providers.providers.items():
+        print(f'Provider: {provider_name} has {len(provider.models)} models available.')
+        for model in provider.models:
+            print(f'  {model.aliases[0] if model.aliases else None}')
     session_start_time = time.time()
 #     # Main interaction loop
     while True:
@@ -160,6 +206,7 @@ def main() -> None:
             # Display response
             elapsed_time = end_time - start_time
             print("Agent: ", result.output)
+            print("Usage: ", result.usage)
             print('Request time: {:.2f} seconds'.format(elapsed_time))
 
 #             for item in response["messages"]:
