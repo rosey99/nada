@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ImportString
 from typing import Callable, Optional, List, Set
 
 class AIRequest(BaseModel):
@@ -27,6 +27,13 @@ class LlamaArgs(BaseModel):
     ctx_size: int = Field(description="Context size")
     flash_attn: bool = Field(description="Flash attention on")
 
+class ModelArchitecture(BaseModel):
+    """
+
+    """
+    model_config = ConfigDict(extra='ignore')
+    input_modalities: Set[str] = Field(description="Allowed input content types.")
+    output_modalities: Set[str] = Field(description="Allowed output content types.")
 
 class LlamaModelData(BaseModel):
     """
@@ -40,8 +47,10 @@ class LlamaModelData(BaseModel):
     owned_by: Optional[str] = Field(description="Model owner")
     created: Optional[int] = Field(description="Creation time")
     model_status: str = Field(description="Model is loaded or unloaded")
+    # for consistency with Openrouter standard
+    context_size: int = Field(description="Model context length.")
     model_args: LlamaArgs
-
+    architecture: ModelArchitecture
 
 class ModelProvider(BaseModel):
     """
@@ -54,5 +63,5 @@ class ModelProvider(BaseModel):
     api_key: str = Field(description="Optional API key, required for most clients even local", default='NOT_A_REAL_KEY')
     support_autoload: Optional[bool] = Field(description="Manual model loading URL", default=True)
     models: List[LlamaModelData] = Field(description="Hosted LLMs", default_factory=list)
-    get_available_models: Callable
-    get_model: Callable
+    get_available_models: ImportString
+    get_model: ImportString

@@ -6,11 +6,12 @@ from enum import Enum
 
 from langchain_openrouter import ChatOpenRouter
 from pydantic import BaseModel, ConfigDict, Field
-from typing import List
+from typing import List, Optional, Set
 
 # TODO add pydotenv and remove override in func body
 OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY')
 OPENROUTER_API_KEY = "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"  # noqa E501
+
 
 class OpenRouterSortOrder(str, Enum):
     throughput = 'throughput-high-to-low'
@@ -30,26 +31,39 @@ class OpenRouterModelListArgs(BaseModel):
     model_config = ConfigDict(use_enum_values=True)
 
 # TODO needs available parms, e.g. temp, etc.
-class OpenRouterModel(BaseModel):
-    id: str = Field(
-        description="The OpenRouter model id."
-    )
-    name: str = Field(
-        description="The model's friendly name."
-    )
-    context_length: int = Field(
-        description="Maximum model context length per session."
-    )
+class OpenRouterModelArgs(BaseModel):
+    """
 
+    """
+    pass
+
+
+class OpenRouterModel(BaseModel):
+    model_config = ConfigDict(extra='ignore')
+    id: str = Field(description="The OpenRouter model id.")
+    name: str = Field(description="The model's friendly name.")
+    description: str = Field(description="Model description.")
+    context_length: int = Field(description="Maximum model context length per session.")
+    aliases: Optional[List[str]] = Field(description="Aliases for the model", default_factory=list)
+    tags: Optional[List[str]] = Field(description="Tags", default_factory=list)
+    created: Optional[int] = Field(description="Creation time")
+    model_status: str = Field(description="Model is loaded or unloaded", default='loaded')
+    # TODO fix model_args with a real model? Probably will not use it.
+    model_args: dict | None = None
+    reasoning: dict | None = None
+    supported_parameters: Set[str] | None = None
+    knowledge_cutoff: str | None = None
+    expiration_date: str | None = None
 
 class OpenRouterModels(BaseModel):
+    model_config = ConfigDict(extra='ignore')
     count: int = Field(
         description="The count of currently available models."
     )
     models: List[OpenRouterModel] = Field(
         description="Listing of currently available models."
     )
-    model_config = ConfigDict(extra='ignore')
+
 
 
 def get_openrouter_models(model_listing_args: OpenRouterModelListArgs
@@ -66,7 +80,7 @@ def get_openrouter_models(model_listing_args: OpenRouterModelListArgs
     headers = {"Authorization": f"Bearer {OPENROUTER_API_KEY}"}
     response = requests.get(url, headers=headers)
     res = response.json()
-    #print(res)
+    print(response.text)
     model_list = response.json()['data']
     num_models = len(model_list)
     #print(f"There are currently {num_models} models available in your range")

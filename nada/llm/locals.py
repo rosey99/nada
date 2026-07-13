@@ -87,8 +87,9 @@ def get_available_llama_models(provider: ModelProvider) -> ModelProvider:
             raise  # reraise
         args_obj = LlamaArgs(**new_args)
         model_obj = LlamaModelData(model_status=status,
-           model_args=args_obj,
-           **model
+            context_size=args_obj.ctx_size,
+            model_args=args_obj,
+            **model
         )
 
         new_models.append(model_obj)

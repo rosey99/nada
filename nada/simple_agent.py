@@ -20,6 +20,7 @@ from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.ext.langchain import tool_from_langchain
 
 from nada.llm.locals import get_available_llama_models, get_llama_model, ProviderCollection
+from nada.llm.openrouter import OpenRouterModelListArgs, get_openrouter_models
 from nada.models import ModelProvider
 
 from yada.tools.shell import bash_shell, CommandCollection, ShellTool
@@ -61,45 +62,21 @@ for model in provider.models:
 if not use_model:
     use_model = providers.get_model_obj(model_id='unsloth/gemma-4-E4B-it-GGUF:Q8_K_XL', provider_name=provider.name)
 model = use_model
-
-# model = OpenAIChatModel(
-#     'unsloth/gemma-4-E4B-it-GGUF:Q8_K_XL',
-#     #'Jackrong/Qwen3.5-9B-DeepSeek-V4-Flash-MTP-GGUF:Q8_0',
-#     #'yuxinlu1/gemma-4-12B-coder-fable5-composer2.5-v1-GGUF:Q6_K',
-#     #'s-batman/ornith-1.0-35B-NVFP4-MTP-GGUF:MTP',
-#     #'unsloth/Qwen3.5-4B-MTP-GGUF:Q8_0',
-#     #'unsloth/Qwen3.5-9B-MTP-GGUF:Q8_K_XL',
-#     provider=OpenAIProvider(
-#         base_url='http://192.168.1.39:8080/v1',
-#         #base_url='http://127.0.0.1:8080/v1',
-#         api_key='your-api-key',
-#     ),
-#     settings = ModelSettings(thinking=False)
-# )
+# Openrouter
+list_args = OpenRouterModelListArgs()
+openmodels = get_openrouter_models(list_args).model_dump()
 
 agent = Agent(
     model,
-    # 'anthropic:claude-sonnet-4-6',
     instructions='You are a helpful and concise assistant.',
     #capabilities=[Thinking(), WebSearch(local='duckduckgo')],
     tools=[duckduckgo_search_tool(), web_fetch_tool(max_content_length=None), tool_from_langchain(ShellTool())],
     #model_settings=
 )
 
-# from yada.agent.agent import get_agent
-# from yada.llm.locals import get_openai
-# from yada.llm.openrouter import create_openrouter_llm ,get_openrouter_models, OpenRouterModelListArgs, OpenRouterModel
-# from yada.mcp_client.client import async_get_mcp_client
-# from yada.tools.web import visit_webpage, ddg_websearch
-# from yada.tools.shell import bash_shell
-# from yada.tools.files import get_file_tools
-
 # setup logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(filename='agent.log', encoding='utf-8', level=logging.DEBUG)
-
-#LLM_BASE_URL = "http://127.0.0.1:8080/v1"
-LLM_BASE_URL = os.getenv('DEFAULT_AGENT_LLM') or "http://192.168.1.39:8080/v1"
 
 # TODO move this out to yaml or something
 # MCP server configuration
@@ -136,23 +113,6 @@ async def interactive_shell(prompt_str: str):
 #async def main() -> None:
 def main() -> None:
 #     """Run the interactive agent loop."""
-#     # tools
-#     base_tools = []
-#     base_tools.append(ddg_websearch)
-#     base_tools.append(visit_webpage)
-#     # Lame!
-#     base_tools.extend(get_file_tools(include_tools=None))
-#     base_tools.append(bash_shell)
-#     base_tools.extend(await async_get_mcp_client(mcp_servers=MCP_SERVERS))
-#     # TODO openrouter hack until interactive session is updated
-#     list_args = OpenRouterModelListArgs()
-#     openmodels = get_openrouter_models(list_args).model_dump()
-#     # A single LLM
-#     # TODO went a little berserk with models as args, toneit sown and set to dict
-#     #  with manual validation
-#     #llm_model = OpenRouterModel(**openmodels['models'][0])
-#     #llm = create_openrouter_llm(llm_model) #get_openai(LLM_BASE_URL)
-#     llm = get_openai(LLM_BASE_URL)
 #     # Get/create the agent
 #     agent = get_agent(
 #         model=llm,
@@ -175,6 +135,8 @@ def main() -> None:
         print(f'Provider: {provider_name} has {len(provider.models)} models available.')
         for model in provider.models:
             print(f'  {model.aliases[0] if model.aliases else None}')
+    print()
+    print(f"There are currently {openmodels['count']} OpenRouter (free!) models available :)")
     session_start_time = time.time()
 #     # Main interaction loop
     while True:
@@ -208,12 +170,6 @@ def main() -> None:
             print("Agent: ", result.output)
             print("Usage: ", result.usage)
             print('Request time: {:.2f} seconds'.format(elapsed_time))
-
-#             for item in response["messages"]:
-#                 if item.type == 'ai':
-#                     # print(f"  role: {item.role}")
-#                     # print(f"  name: {item.name}")
-#                     print(f"  Agent: {item.content}")
 
         except KeyboardInterrupt:
             print("\n\n👋 Agent stopped. Thanks for using it!")
