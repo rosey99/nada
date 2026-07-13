@@ -2,7 +2,7 @@ import logging
 
 import requests
 
-from typing import List, Union
+#from typing import List, Union
 
 from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
@@ -10,30 +10,6 @@ from pydantic_ai.providers.openai import OpenAIProvider
 from nada.models import LlamaArgs, LlamaModelData, ModelProvider
 
 logger = logging.getLogger(__name__)
-
-class ProviderCollection:
-    """
-
-    """
-    def __init__(self, provider_list: List[dict]):
-
-        # TODO for now validate here in init
-        self.providers = {provider['name']: ModelProvider(**provider) for provider in provider_list}
-
-    def get_model_list(self, provider_name: str):
-        provider = self.providers[provider_name].get_available_models(self.providers[provider_name])
-        self.providers[provider_name] = provider
-        return provider
-
-    def get_model_obj(self, model_id: str, provider_name: str):
-        model_obj = self.providers[provider_name].get_model(model_id, self.providers[provider_name])
-        return model_obj
-
-    def refresh_provider(self, provider_name: Union[str, None] = None):
-        provider_names = self.providers.keys() if provider_name is None else [provider_name]
-        for provider in provider_names:
-            _ = self.get_model_list(provider)
-
 
 
 def get_llama_model(model_id: str, provider: ModelProvider) -> OpenAIChatModel:
@@ -55,15 +31,12 @@ def get_available_llama_models(provider: ModelProvider) -> ModelProvider:
     """
 
     """
-    #raw_provider = provider.model_dump()
     url = f"{provider.models_url}"  # noqa E501
     #print('URL: ', url)
-    headers = {}
     response = requests.get(url) #, headers=headers)
     #res = response.json()
     #print(res)
     model_list = response.json()['data']
-    num_models = len(model_list)
     new_models = []
     arg_prefix = '--'
     for model in model_list:

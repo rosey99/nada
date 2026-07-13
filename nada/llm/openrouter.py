@@ -7,6 +7,10 @@ from enum import Enum
 from langchain_openrouter import ChatOpenRouter
 from pydantic import BaseModel, ConfigDict, Field
 from typing import List, Optional, Set
+from pydantic_ai.models.openrouter import OpenRouterModel
+from pydantic_ai.providers.openrouter import OpenRouterProvider
+
+from nada.models import ModelProvider
 
 # TODO add pydotenv and remove override in func body
 OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY')
@@ -20,6 +24,7 @@ class OpenRouterSortOrder(str, Enum):
     intelligence = 'intelligence-high-to-low'
 
 class OpenRouterModelListArgs(BaseModel):
+    model_config = ConfigDict(use_enum_values=True)
     max_price: float = Field(
         description="The maximum price to include in model listing.",
         default=0.0
@@ -28,7 +33,7 @@ class OpenRouterModelListArgs(BaseModel):
         description="The sort order for the OpenRouter model listing.",
         default='throughput-high-to-low'
     )
-    model_config = ConfigDict(use_enum_values=True)
+
 
 # TODO needs available parms, e.g. temp, etc.
 class OpenRouterModelArgs(BaseModel):
@@ -38,7 +43,7 @@ class OpenRouterModelArgs(BaseModel):
     pass
 
 
-class OpenRouterModel(BaseModel):
+class MyOpenRouterModel(BaseModel):
     model_config = ConfigDict(extra='ignore')
     id: str = Field(description="The OpenRouter model id.")
     name: str = Field(description="The model's friendly name.")
@@ -55,59 +60,61 @@ class OpenRouterModel(BaseModel):
     knowledge_cutoff: str | None = None
     expiration_date: str | None = None
 
+
 class OpenRouterModels(BaseModel):
     model_config = ConfigDict(extra='ignore')
     count: int = Field(
         description="The count of currently available models."
     )
-    models: List[OpenRouterModel] = Field(
+    models: List[MyOpenRouterModel] = Field(
         description="Listing of currently available models."
     )
 
 
-
-def get_openrouter_models(model_listing_args: OpenRouterModelListArgs
+def get_available_openrouter_models(provider: ModelProvider) -> ModelProvider:
+#def get_openrouter_models(model_listing_args: OpenRouterModelListArgs
         # TODO get the real data type for price
         #max_price: float = 0.0,
         #sort_order: str = 'throughput-high-to-low'
-    ) -> OpenRouterModels:
+    #)
     """
     A placeholder for now
     """
-    args = model_listing_args.model_dump()
-    url = f"https://openrouter.ai/api/v1/models?max_price={args['max_price']}&sort={args['sort_order']}"  # noqa E501
+    args = OpenRouterModelListArgs()  # TODO fix this to allow for default overrides from settings
+    url = f"https://openrouter.ai/api/v1/models?max_price={args.max_price}&sort={args.sort_order}"  # noqa E501
     #print('URL: ', url)
-    headers = {"Authorization": f"Bearer {OPENROUTER_API_KEY}"}
+    headers = {"Authorization": f"Bearer {provider.api_key}"}
     response = requests.get(url, headers=headers)
-    res = response.json()
-    print(response.text)
+    #res = response.json()
+    #print(response.text)
     model_list = response.json()['data']
-    num_models = len(model_list)
+    #num_models = len(model_list)
     #print(f"There are currently {num_models} models available in your range")
     #print("The top 5 models are:")
-    result = OpenRouterModels(count=num_models, models=model_list)
-    # for model in model_list:
+    #result = OpenRouterModels(count=num_models, models=model_list)
+    new_models = []
+    for model in model_list:
+        model_obj = MyOpenRouterModel(**model)
+        new_models.append(model_obj)
+
+    provider.models = new_models
     #     if i < 5:
     #         print(model_list[i])
     #     else:
     #         break
     # print()
-    return result
+    return provider
 
-def create_openrouter_llm(openrouter_llm: OpenRouterModel) -> ChatOpenRouter:
-    llm_args = openrouter_llm.model_dump()
 
-    llm = ChatOpenRouter(
-        model=llm_args['id'],
-        temperature=.5,
-        # TODO research what this actually should be
-        #  for now use up to half the context length
-        #  note that this is optional and actual tokens
-        #  are added to model context_length and exceed
-        #  the max allowed context raising an error
-        max_tokens=llm_args['context_length']//2,
-        max_retries=2,
-        api_key=OPENROUTER_API_KEY
-        # other params...
+def get_openrouter_model(model_id: str, provider: ModelProvider) -> ChatOpenRouter:
+    #llm_args = openrouter_llm.model_dump()
+
+    model = OpenRouterModel(
+        model_id,
+        provider=OpenRouterProvider(
+            #base_url=provider.prompt_url,
+            api_key=provider.api_key,
+        ),
+        #settings = ModelSettings(thinking=False)
     )
-    return llm
+    return model

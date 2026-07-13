@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict, Field, ImportString
-from typing import Callable, Optional, List, Set
+from typing import Optional, List, Set
 
 class AIRequest(BaseModel):
     message: str = Field(

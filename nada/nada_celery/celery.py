@@ -3,20 +3,17 @@ from celery import Celery
 from kombu import Queue
 #from dotenv import load_dotenv
 from nada.settings import settings
-from nada.nada_celery import tasks
+#from nada.nada_celery import tasks
 
 """
 A test module for celery abstraction of async
 jobs, probably from a web app.
 
 """
-import os
+#import os
 
 import logging
 logger = logging.getLogger(__name__)
-
-#load_dotenv()
-from nada.settings import settings
 
 backend_uri = settings.CELERY_RESULT_URI  #os.getenv('CELERY_RESULT_URI')
 broker_uri = settings.CELERY_BROKER_URI # os.getenv('CELERY_BROKER_URI')

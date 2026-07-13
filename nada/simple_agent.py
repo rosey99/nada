@@ -1,33 +1,33 @@
-import asyncio
+#import asyncio
 import logging
-import os
+#import os
 import time
 
 from prompt_toolkit import PromptSession
-from prompt_toolkit.patch_stdout import patch_stdout
+#from prompt_toolkit.patch_stdout import patch_stdout
 
 
 from pydantic_ai import Agent
-from pydantic_ai.capabilities import Thinking, WebSearch
+#from pydantic_ai.capabilities import Thinking, WebSearch
 
 from pydantic_ai.common_tools.web_fetch import web_fetch_tool
 from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
 
-from pydantic_ai.models import ModelSettings
-from pydantic_ai.models.openai import OpenAIChatModel
-from pydantic_ai.providers.openai import OpenAIProvider
+#from pydantic_ai.models import ModelSettings
+#from pydantic_ai.models.openai import OpenAIChatModel
+#from pydantic_ai.providers.openai import OpenAIProvider
 
 from pydantic_ai.ext.langchain import tool_from_langchain
 
-from nada.llm.locals import get_available_llama_models, get_llama_model, ProviderCollection
-from nada.llm.openrouter import OpenRouterModelListArgs, get_openrouter_models
-from nada.models import ModelProvider
+from nada.llm.locals import get_available_llama_models, get_llama_model
+from nada.llm.common.provider import ProviderCollection
+from nada.llm.openrouter import get_openrouter_model, get_available_openrouter_models
+#from nada.models import ModelProvider
 
-from yada.tools.shell import bash_shell, CommandCollection, ShellTool
+from yada.tools.shell import ShellTool
 
-#model_settings = OpenAIChatModelSettings({'reasoning': 'off'})
 
-local_providers = [
+LOCAL_PROVIDERS = [
     {'name': "Local LTV LLM",
      'prompt_url': "http://192.168.1.39:8080/v1",
      'models_url': "http://192.168.1.39:8080/models",
@@ -44,35 +44,15 @@ local_providers = [
       'get_available_models': get_available_llama_models,
       'get_model': get_llama_model,
       },
-
+      {'name': "Openrouter",
+       'prompt_url': "https://openrouter.ai/api/v1",
+       'models_url': "",
+       'load_url': "",
+       'support_autoload': True,
+       'get_available_models': get_available_openrouter_models,
+       'get_model': get_openrouter_model,
+       },
 ]
-providers = ProviderCollection(provider_list=local_providers)
-#provider = ModelProvider(**local_providers[0])
-# modifies in place and returns
-providers.refresh_provider()
-#get_available_llama_models(provider=provider)
-provider = providers.providers['Local LTV LLM']
-use_model = None
-for model in provider.models:
-    # get the loaded model
-    if model.model_status == 'loaded':
-        use_model = get_llama_model(model_id=model.id, provider=provider)
-        print('Found loaded model: ', model.id, model.model_status)
-        print(f'Context: {model.model_args.ctx_size}')
-if not use_model:
-    use_model = providers.get_model_obj(model_id='unsloth/gemma-4-E4B-it-GGUF:Q8_K_XL', provider_name=provider.name)
-model = use_model
-# Openrouter
-list_args = OpenRouterModelListArgs()
-openmodels = get_openrouter_models(list_args).model_dump()
-
-agent = Agent(
-    model,
-    instructions='You are a helpful and concise assistant.',
-    #capabilities=[Thinking(), WebSearch(local='duckduckgo')],
-    tools=[duckduckgo_search_tool(), web_fetch_tool(max_content_length=None), tool_from_langchain(ShellTool())],
-    #model_settings=
-)
 
 # setup logging
 logger = logging.getLogger(__name__)
@@ -112,33 +92,49 @@ async def interactive_shell(prompt_str: str):
 
 #async def main() -> None:
 def main() -> None:
-#     """Run the interactive agent loop."""
-#     # Get/create the agent
-#     agent = get_agent(
-#         model=llm,
-#         tools=base_tools,
-#         system_prompt="You are a helpful assistant",
-#     )
-#     # Display available tools
-#     print("\n🔧 Available tools:")
-#     for tool in base_tools:
-#         # Some tools have loooong descriptions for
-#         #  prompt injection, e.g., MCP client
-#         print(f"  - {tool.name}: {tool.description[:80]}")
-#     print()
-#     print(f"There are currently {openmodels['count']} OpenRouter (free!) models available :)")
-#     # Print welcome message
+#     """Setup and run the interactive agent loop."""
+    # Get providers, start with local
+    providers = ProviderCollection(provider_list=LOCAL_PROVIDERS)
+
+    # modifies in place and returns
+    providers.refresh_provider()
+    provider = providers.providers['Local LTV LLM']
+    use_model = None
+    for model in provider.models:
+        # get the loaded model
+        if model.model_status == 'loaded':
+            use_model = get_llama_model(model_id=model.id, provider=provider)
+            print('Found loaded model: ', model.id, model.model_status)
+            print(f'Context: {model.model_args.ctx_size}')
+    if not use_model:
+        use_model = providers.get_model_obj(model_id='unsloth/gemma-4-E4B-it-GGUF:Q8_K_XL', provider_name=provider.name)
+
+    model = use_model
+
+    agent = Agent(
+        model,
+        instructions='You are a helpful and concise assistant.',
+        #capabilities=[Thinking(), WebSearch(local='duckduckgo')],
+        tools=[duckduckgo_search_tool(), web_fetch_tool(max_content_length=None), tool_from_langchain(ShellTool())],
+        #model_settings=
+    )
+
+    print("\n🔧 Available tools:")
+    for tools in agent.toolsets:
+        for tool in tools.tools.values():
+            print("Tool: ", tool.name, tool.description)
+
     print("\n🌐 Agent is ready! Ask questions about the internet.")
     print("\nType 'ctrl-c', 'quit' or 'exit' to stop the agent.")
     print()
     for provider_name, provider in providers.providers.items():
         print(f'Provider: {provider_name} has {len(provider.models)} models available.')
-        for model in provider.models:
-            print(f'  {model.aliases[0] if model.aliases else None}')
+        #for model in provider.models:
+        #    print(f'  {model.aliases[0] if model.aliases else model.id}')
     print()
-    print(f"There are currently {openmodels['count']} OpenRouter (free!) models available :)")
+    #print(f"There are currently {len(openmodels.models)} OpenRouter (free!) models available :)")
     session_start_time = time.time()
-#     # Main interaction loop
+    # Main interaction loop
     while True:
         try:
             user_input = input("You: ")
@@ -153,21 +149,17 @@ def main() -> None:
                 print("Please enter a question.\n")
                 continue
             start_time = time.time()
-            thinking_budget_tokens = int((len(user_input) * 2) + 200)
+            #thinking_budget_tokens = int((len(user_input) * 2) + 200)
             # Process the query
             print("\n🤖 Agent thinking...")
-#             response = agent.invoke(
-#                 {"messages": [{"role": "user", "content": user_input, }],
-#                  "thinking_budget_tokens": thinking_budget_tokens,
-#                  # "reasoning_budget_start_tokens": 200,
-#                  # "reasoning_budget_max_tokens": thinking_budget_tokens
-#                  }
-#             )
+
             result = agent.run_sync(user_input) # , model_settings={"thinking_budget_tokens": thinking_budget_tokens})
             end_time = time.time()
             # Display response
             elapsed_time = end_time - start_time
+
             print("Agent: ", result.output)
+            print()
             print("Usage: ", result.usage)
             print('Request time: {:.2f} seconds'.format(elapsed_time))
 
