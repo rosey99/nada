@@ -1,6 +1,6 @@
-from typing import List
+#from typing import List
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):

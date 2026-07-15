@@ -11,6 +11,7 @@ from pydantic_ai.models.openrouter import OpenRouterModel
 from pydantic_ai.providers.openrouter import OpenRouterProvider
 
 from nada.models import ModelProvider
+from nada.settings import settings
 
 # TODO add pydotenv and remove override in func body
 OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY')
@@ -84,7 +85,8 @@ def get_available_openrouter_models(provider: ModelProvider) -> ModelProvider:
     url = f"https://openrouter.ai/api/v1/models?max_price={args.max_price}&sort={args.sort_order}"  # noqa E501
     #print('URL: ', url)
     headers = {"Authorization": f"Bearer {provider.api_key}"}
-    response = requests.get(url, headers=headers)
+    api_timeout = provider.models_api_timeout
+    response = requests.get(url, headers=headers, timeout=api_timeout)
     #res = response.json()
     #print(response.text)
     model_list = response.json()['data']

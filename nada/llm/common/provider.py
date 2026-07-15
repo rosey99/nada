@@ -1,8 +1,12 @@
+import logging
 
 from typing import List, Union
 
+from requests.exceptions import ConnectionError, Timeout
+
 from nada.models import ModelProvider
 
+logger = logging.getLogger(__name__)
 
 class ProviderCollection:
     """
@@ -14,7 +18,16 @@ class ProviderCollection:
         self.providers = {provider['name']: ModelProvider(**provider) for provider in provider_list}
 
     def get_model_list(self, provider_name: str):
-        provider = self.providers[provider_name].get_available_models(self.providers[provider_name])
+
+        provider = self.providers[provider_name]
+        try:
+            provider = provider.get_available_models(self.providers[provider_name])
+            provider.status = 'ONLINE'
+        except (Timeout, ConnectionError):
+            # TODO clumsy, add a status to provider?
+            provider.models = []
+            provider.status = 'OFFLINE'
+            logger.error(f"Provider model listing timeout for: {provider_name}")
         self.providers[provider_name] = provider
         return provider
 

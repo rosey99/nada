@@ -57,8 +57,11 @@ class ModelProvider(BaseModel):
 
     """
     name: str = Field(description="Provider name")
+    # TODO make this a literaal or use an enum :()
+    status: str = Field(description="Provider is ONLINE, OFFLINE, or unknown", default='unknown')
     prompt_url: str = Field(description="Base URL")
-    models_url: Optional[str] | None = Field(description="Models and model status URL")
+    models_api_timeout: Optional[int] = Field(description="Timeout in seconds for API calls, not including chat.", default=0)
+    models_url: Optional[str] | None = Field(description="Models and model status URL.")
     load_url: Optional[str] | None = Field(description="Manual model loading URL")
     api_key: str = Field(description="Optional API key, required for most clients even local", default='NOT_A_REAL_KEY')
     support_autoload: Optional[bool] = Field(description="Manual model loading URL", default=True)

@@ -33,7 +33,7 @@ def get_available_llama_models(provider: ModelProvider) -> ModelProvider:
     """
     url = f"{provider.models_url}"  # noqa E501
     #print('URL: ', url)
-    response = requests.get(url) #, headers=headers)
+    response = requests.get(url, timeout=provider.models_api_timeout)
     #res = response.json()
     #print(res)
     model_list = response.json()['data']
