@@ -1,0 +1,6 @@
+{% for provider in providers %}
+<p>
+    {{ provider.name }} is {{provider.status}} with {{provider.models | length}}
+    models
+</p>
+{% endfor %}

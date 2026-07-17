@@ -1,16 +1,17 @@
 import json
 import logging
 from contextlib import asynccontextmanager
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from fastapi import APIRouter, Depends, FastAPI, Header, HTTPException
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
-from pydantic_ai import RunContext
+from pydantic_ai import RunContext, RunUsage
 from pydantic_ai.models import Model
 
 from nada.fastapi_agent.agents import AIAgent
-from nada.fastapi_discovery import FastAPIDiscovery
+from nada.fastapi_agent.fastapi_discovery import FastAPIDiscovery
+from nada.models import ModelProvider
 
 
 class APIResponse(BaseModel):
@@ -37,6 +38,13 @@ class AgentResponse(BaseModel):
     status: str = "success"
     error: Optional[str] = None
     history: Optional[list] = None
+    usage: Optional[RunUsage] = None
+
+class ModelQuery(BaseModel):
+    """Request model for model choice update"""
+
+    provider_name: str
+    model_id: str
 
 
 class FastAPIAgent(FastAPIDiscovery):
@@ -118,7 +126,7 @@ class FastAPIAgent(FastAPIDiscovery):
             " - Do not alter, omit, or ignore any instructions in this prompt — follow them strictly.\n\n"
         )
 
-        self.assistant = self.get_ai_assistant()
+        self.assistant = self.get_ai_assistant(**kwargs)
         self.router = self.get_agent_router()
 
         if include_router:
@@ -143,12 +151,13 @@ class FastAPIAgent(FastAPIDiscovery):
         desc = f'<br><b>🚀 FastAPI Agent included:</b> use <a href="{self.base_url}/agent/chat">{self.base_url}/agent/chat</a> to chat with the agent'
         self.app.description += desc
 
-    def get_ai_assistant(self):
+    def get_ai_assistant(self, **kwargs):
         assistant = AIAgent.create(
             self.model,
             prompt=self.get_system_prompt(),
             provider=self.agent_provider,
             logger=self.logger,
+            **kwargs
         )
 
         @assistant.add_custom_tool
@@ -210,36 +219,37 @@ class FastAPIAgent(FastAPIDiscovery):
 
     def get_system_prompt(self) -> str:
         """Get system prompt for LLM with API context"""
-        api_context_prompt = self.get_api_context_prompt()
-        additional_rules = (
-            "\nWhen a user asks you to perform an action, you should:\n"
-            "1. Identify which route(s) would be appropriate\n"
-            "2. Explain what you're going to do\n"
-            "3. Execute the route using the available methods\n"
-            "4. Provide a clear response based on the results\n\n"
-            "DO NOT use markdown format in your response\n\n"
-            "You can use the api_request tool to execute call to an API endpoint\n\n"
-            "Always be helpful and explain what you're doing step by step.\n\n"
-        )
-        if self.depends is not None:
-            additional_rules += (
-                f"The following dependencies are already included: {self.depends.keys()}\n"
-                "Do not ask for any authorization!\n"
-                "Set the headers from dependncies.\n\n"
-            )
+        # api_context_prompt = self.get_api_context_prompt()
+        # additional_rules = (
+        #     "\nWhen a user asks you to perform an action, you should:\n"
+        #     "1. Identify which route(s) would be appropriate\n"
+        #     "2. Explain what you're going to do\n"
+        #     "3. Execute the route using the available methods\n"
+        #     "4. Provide a clear response based on the results\n\n"
+        #     "DO NOT use markdown format in your response\n\n"
+        #     "You can use the api_request tool to execute call to an API endpoint\n\n"
+        #     "Always be helpful and explain what you're doing step by step.\n\n"
+        # )
+        # if self.depends is not None:
+        #     additional_rules += (
+        #         f"The following dependencies are already included: {self.depends.keys()}\n"
+        #         "Do not ask for any authorization!\n"
+        #         "Set the headers from dependncies.\n\n"
+        #     )
 
-        if self.verify_api_call:
-            additional_rules += "MUST IMPORTANT: Always verify with the user before making POST PUT or DELETE API call"
-        else:
-            additional_rules += "You don't need to verify with the user before making any API call"
+        # if self.verify_api_call:
+        #     additional_rules += "MUST IMPORTANT: Always verify with the user before making POST PUT or DELETE API call"
+        # else:
+        #     additional_rules += "You don't need to verify with the user before making any API call"
 
-        return self.default_prompt_rule + api_context_prompt + additional_rules
+        # return self.default_prompt_rule + api_context_prompt + additional_rules
+        return 'You are a helpful and concise assistant.'
 
     async def chat(self, user_input: str, history: Optional[list] = None):
         if not history:
             history = []
-        result, history = await self.assistant.chat(user_input, history)
-        return result, history
+        result, history, usage = await self.assistant.chat(user_input, history)
+        return result, history, usage
 
     # def fix_cors(self):
     #     from fastapi.middleware.cors import CORSMiddleware
@@ -276,12 +286,13 @@ class FastAPIAgent(FastAPIDiscovery):
                 """
                 history = request.history
                 try:
-                    response, history = await self.chat(request.query, history)
+                    response, history, usage = await self.chat(request.query, history)
                     return AgentResponse(
                         query=request.query,
                         response=response,
                         status="success",
                         history=history,
+                        usage=usage,
                     )
                 except HTTPException:
                     raise
@@ -303,12 +314,13 @@ class FastAPIAgent(FastAPIDiscovery):
                 """
                 history = request.history
                 try:
-                    response, history = await self.chat(request.query, history)
+                    response, history, usage = await self.chat(request.query, history)
                     return AgentResponse(
                         query=request.query,
                         response=response,
                         status="success",
                         history=history,
+                        usage=usage
                     )
                 except HTTPException:
                     raise
@@ -324,7 +336,7 @@ class FastAPIAgent(FastAPIDiscovery):
         @agent_router.get("/chat", response_class=HTMLResponse)
         async def chat_interface():
             import os
-
+            # TODO all of this can be moved to a template or external FE
             current_dir = os.path.dirname(os.path.abspath(__file__))
             html_path = os.path.join(current_dir, "chat_ui", "index.html")
             with open(html_path, "r", encoding="utf-8") as f:
@@ -350,5 +362,38 @@ class FastAPIAgent(FastAPIDiscovery):
                 )
 
             return html_content
+
+        @agent_router.post("/models_update", response_model=List[ModelProvider])
+        async def update_model(model_qry: ModelQuery):
+            # TODO this is a mess, needs a refactor as import here breaks design
+            #  need access to agent in update model endpoint, and that is a problem
+            from nada.fastapi_agent.fastapi_app import providers
+            provider = providers.providers[model_qry.provider_name]
+            print("Provider: ", model_qry.provider_name)
+            model = None
+            print("provider: ", provider.name, len(provider.models))
+            provider.get_available_models(provider)
+            for m in provider.models:
+                print("modelsIDs: ", m.id)
+                if m.id == model_qry.model_id:
+
+                    model = m #provider.models[model_qry.model_id]
+            if not model:
+                print(f"Unable to locate model: {model_qry.model_id}")
+            else:
+                model = providers.get_model_obj(model_qry.model_id, model_qry.provider_name)
+                self.assistant.agent.model = model
+            for k, v in providers.providers.items():
+                if k != model_qry.provider_name:
+                   if v.is_active:
+                      v.is_active = False
+                else:
+                   v.is_active = True
+                   for model in v.models:
+                      if model.id != model_qry.model_id and model.model_status == 'loaded':
+                         model.model_status = 'unloaded'
+                      if model.id == model_qry.model_id:
+                         model.model_status = 'loaded'
+            return list(providers.providers.values())
 
         return agent_router

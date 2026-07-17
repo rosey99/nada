@@ -59,6 +59,7 @@ class ModelProvider(BaseModel):
     name: str = Field(description="Provider name")
     # TODO make this a literaal or use an enum :()
     status: str = Field(description="Provider is ONLINE, OFFLINE, or unknown", default='unknown')
+    is_active: bool = Field(description="Is this the currently selected provider", default=False)
     prompt_url: str = Field(description="Base URL")
     models_api_timeout: Optional[int] = Field(description="Timeout in seconds for API calls, not including chat.", default=0)
     models_url: Optional[str] | None = Field(description="Models and model status URL.")

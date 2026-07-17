@@ -38,12 +38,16 @@ class AIAgent:
         prompt: Optional[str] = DEFAULT_PROMPT,
         provider: str = "pydantic_ai",
         logger: Optional[logging.Logger] = None,
+        **kwargs
     ):
+        tools = kwargs.get('tools') or []
+        capabilities = kwargs.get('capabilities') or []
+        #print('tools: ', tools)
         if provider == "pydantic_ai":
             if isinstance(model, PydanticAIModel):
-                return PydanticAIAgent(prompt=prompt, model=model, logger=logger)
+                return PydanticAIAgent(prompt=prompt, model=model, logger=logger, tools=tools, capabilities=capabilities)
             elif isinstance(model, str):
-                return PydanticAIAgent(prompt=prompt, model_name=model, logger=logger)
+                return PydanticAIAgent(prompt=prompt, model_name=model, logger=logger, tools=tools, capabilities=capabilities)
             else:
                 raise ModelTypeNotSupported(f"Provider {provider} not support model type: {type(model)}")
 

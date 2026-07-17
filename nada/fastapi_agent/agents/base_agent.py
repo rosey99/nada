@@ -4,13 +4,13 @@ from typing import Optional
 
 
 class BaseAgent(ABC):
-    def __init__(self, provider: str = None, logger: Optional[logging.Logger] = None):
+    def __init__(self, provider: str = None, logger: Optional[logging.Logger] = None, **kwargs):
         if logger is None:
             logger = logging.getLogger(__name__)
             logger.addHandler(logging.NullHandler())
         self.logger = logger
 
-        self.agent = self.initialize_agent()
+        self.agent = self.initialize_agent(**kwargs)
         assert self.agent is not None, "Subclasses must initialize the agent attribute"
 
         self.provider = provider

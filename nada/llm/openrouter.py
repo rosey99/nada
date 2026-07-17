@@ -43,7 +43,7 @@ class OpenRouterModelArgs(BaseModel):
     """
     pass
 
-
+# TODO class name is taken :() rename this and unify with a std
 class MyOpenRouterModel(BaseModel):
     model_config = ConfigDict(extra='ignore')
     id: str = Field(description="The OpenRouter model id.")
@@ -82,41 +82,29 @@ def get_available_openrouter_models(provider: ModelProvider) -> ModelProvider:
     A placeholder for now
     """
     args = OpenRouterModelListArgs()  # TODO fix this to allow for default overrides from settings
+    # TODO fix this BS, move to config file
     url = f"https://openrouter.ai/api/v1/models?max_price={args.max_price}&sort={args.sort_order}"  # noqa E501
-    #print('URL: ', url)
     headers = {"Authorization": f"Bearer {provider.api_key}"}
     api_timeout = provider.models_api_timeout
     response = requests.get(url, headers=headers, timeout=api_timeout)
     #res = response.json()
     #print(response.text)
     model_list = response.json()['data']
-    #num_models = len(model_list)
-    #print(f"There are currently {num_models} models available in your range")
-    #print("The top 5 models are:")
-    #result = OpenRouterModels(count=num_models, models=model_list)
     new_models = []
     for model in model_list:
         model_obj = MyOpenRouterModel(**model)
         new_models.append(model_obj)
-
     provider.models = new_models
-    #     if i < 5:
-    #         print(model_list[i])
-    #     else:
-    #         break
-    # print()
     return provider
 
 
 def get_openrouter_model(model_id: str, provider: ModelProvider) -> ChatOpenRouter:
     #llm_args = openrouter_llm.model_dump()
-
     model = OpenRouterModel(
         model_id,
         provider=OpenRouterProvider(
             #base_url=provider.prompt_url,
             api_key=provider.api_key,
         ),
-        #settings = ModelSettings(thinking=False)
     )
     return model

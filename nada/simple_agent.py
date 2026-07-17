@@ -30,7 +30,7 @@ from yada.tools.shell import ShellTool
 
 
 LOCAL_PROVIDERS = [
-    {'name': "Local LTV LLM",
+    {'name': "Local Llama LTV",
      'prompt_url': "http://192.168.1.39:8080/v1",
      'models_url': "http://192.168.1.39:8080/models",
      'load_url': "http://192.168.1.39:8080/load",
@@ -39,7 +39,7 @@ LOCAL_PROVIDERS = [
      'get_model': get_llama_model,
      'models_api_timeout': 5,
      },
-     {'name': "Local SlowBig LLM",
+     {'name': "Local Llama BSlow",
       'prompt_url': "http://127.0.0.1:8080/v1",
       'models_url': "http://127.0.0.1:8080/models",
       'load_url': "http://127.0.0.1:8080/load",
@@ -103,7 +103,7 @@ def main() -> None:
 
     # modifies in place and returns
     providers.refresh_provider()
-    provider = providers.providers['Local LTV LLM']
+    provider = providers.providers['Local Llama LTV']
 
     use_model = None
     for model in provider.models:
@@ -113,12 +113,12 @@ def main() -> None:
             #print('Found loaded model: ', model.id, model.model_status)
             #print(f'Context: {model.context_size}')
     if not use_model:
-        use_model = providers.get_model_obj(model_id='qwythos-9B-MTP', provider_name=provider.name)
+        use_model = providers.get_model_obj(model_id='unsloth/Qwen3.5-4B-MTP-GGUF:Q8_0', provider_name=provider.name)
 
     model = use_model
 
-    t = tool_from_langchain(ShellTool())
-    t.description = "Execute one or more bash commands as a list of strings."
+    #t = tool_from_langchain(ShellTool())
+    #t.description = "Execute one or more bash commands as a list of strings."
 
     agent = Agent(
         model,

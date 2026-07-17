@@ -1,5 +1,5 @@
 import logging
-from typing import Optional
+from typing import List, Optional
 
 from pydantic_ai import Agent
 from pydantic_ai.models import Model
@@ -17,6 +17,8 @@ class PydanticAIAgent(BaseAgent):
         model_name: str = "openai:gpt-4.1-mini",
         model: Optional[Model] = None,
         prompt: Optional[str] = None,
+        tools: Optional[List] = None,
+        capabilities: Optional[List] = None,
         logger: Optional[logging.Logger] = None,
     ):
         """
@@ -32,15 +34,19 @@ class PydanticAIAgent(BaseAgent):
         self.prompt = prompt
         self.model = model or model_name
         # self.agent = self.initialize_agent()
-        super().__init__(provider=self.provider, logger=logger)
+        super().__init__(provider=self.provider, tools=tools, capabilities=capabilities, logger=logger)
 
-    def initialize_agent(self):
+    def initialize_agent(self, **kwargs):
         """Create the agent with system prompt and model"""
         self.logger.info(f"initialzing agent with {self.model if isinstance(self.model, str) else self.model.__class__}")
+        tools = kwargs.get('tools') or []
+        capabilities = kwargs.get('capabilities') or []
         return Agent(
             model=self.model,
             system_prompt=self.prompt,
             output_type=str,
+            tools=tools,
+            capabilities=capabilities
         )
 
     async def chat(self, message: str, history: list = None) -> tuple[str, list]:
@@ -76,12 +82,13 @@ class PydanticAIAgent(BaseAgent):
 
             result = await self.agent.run(enhanced_message)
             response_text = result.output
+            response_usage = result.usage
 
             # Update history with new message and response
             history.append({"role": "user", "content": message})
             history.append({"role": "assistant", "content": response_text})
 
-            return response_text, history
+            return response_text, history, response_usage
 
         except Exception as e:
             error_msg = f"Error: {str(e)}"
@@ -90,7 +97,7 @@ class PydanticAIAgent(BaseAgent):
             # Still update history even if there was an error
             history.append({"role": "user", "content": message})
             history.append({"role": "assistant", "content": error_msg})
-            return error_msg, history
+            return error_msg, history, None
 
     def add_custom_tool(self, tool_func):
         """
