@@ -38,26 +38,6 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Mock database
-users_db = [
-    {"id": 1, "name": "Alice", "email": "alice@example.com", "age": 30},
-    {"id": 2, "name": "Bob", "email": "bob@example.com", "age": 25},
-]
-
-
-# Example Pydantic models
-class User(BaseModel):
-    name: str
-    email: str
-    age: Optional[int] = None
-
-
-class UserResponse(BaseModel):
-    id: int
-    name: str
-    email: str
-    age: Optional[int] = None
-
 
 templates = Jinja2Templates(directory=PARENT_DIR_PATH + "/chat_ui/templates")
 
@@ -71,8 +51,7 @@ async def root():
 @app.get("/providers", response_class=HTMLResponse, tags=["providers"])
 async def list_model_providers(request: Request):
     """
-    Retrieve a list of users with pagination.
-    This endpoint allows you to get multiple users at once.
+    Retrieve model providers and models as an html fragment. Deprecated.
     """
     providers_list = list(providers.providers.values())
     return templates.TemplateResponse(
@@ -83,8 +62,8 @@ async def list_model_providers(request: Request):
 @app.get("/providers_json", response_model=List[ModelProvider], tags=["providers_json"])
 async def json_model_providers(request: Request):
     """
-    Retrieve a list of users with pagination.
-    This endpoint allows you to get multiple users at once.
+    Retrieve model providers and models as JSON.
+
     """
     #providers_list = list(providers.providers.values())
     # return templates.TemplateResponse(
@@ -92,54 +71,6 @@ async def json_model_providers(request: Request):
     #     )
     return list(providers.providers.values())
 
-@app.get("/users/{user_id}", response_model=UserResponse, tags=["users"])
-async def get_user(user_id: int):
-    """
-    Get a specific user by their unique ID.
-    Returns detailed information about a single user.
-    """
-    global users_db
-    user = [u for u in users_db if u["id"] == user_id][0]
-    return user
-
-
-@app.post("/users", response_model=UserResponse, tags=["users"])
-async def create_user(user: User):
-    """
-    Create a new user in the system.
-    Provide name, email, and optionally age to create a user account.
-    """
-    global users_db
-
-    # Mock creation - replace with your actual database logic
-    new_user = {"id": (len(users_db) + 1), **user.model_dump()}
-    users_db.append(new_user)
-    return new_user
-
-
-@app.put("/users/{user_id}", response_model=UserResponse, tags=["users"])
-async def update_user(user_id: int, user: dict):
-    """
-    Update an existing user's information.
-    All fields can be modified using this endpoint.
-    """
-    global users_db
-
-    _user = [u for u in users_db if u["id"] == user_id][0]
-    _user.update(user)
-    return _user
-
-
-@app.delete("/users/{user_id}", tags=["users"])
-async def delete_user(user_id: int):
-    """
-    Delete a user from the system.
-    This action cannot be undone.
-    """
-    global users_db
-
-    users_db = [user for user in users_db if user["id"] != user_id]
-    return {"message": f"User {user_id} has been deleted"}
 
 providers = ProviderCollection(provider_list=LOCAL_PROVIDERS)
 
@@ -165,9 +96,15 @@ if __name__ == "__main__":
             #print(f'Context: {model.context_size}')
         pass
     if not use_model:
-        use_model = providers.get_model_obj(model_id='s-batman/ornith-1.0-35B-NVFP4-MTP-GGUF:MTP', provider_name=provider.name)
+        model_id = 's-batman/ornith-1.0-35B-NVFP4-MTP-GGUF:MTP'
+        use_model = providers.get_model_obj(model_id=model_id, provider_name=provider.name)
+        # TODO consider changing the pydantic model so that models are a dict
+        for model in provider.models:
+           if model.id == model_id:
+               model.selected = True
 
     model = use_model
+    print("Model selected: ", model.model_id)
     # create the FastAPI Agent instance
     agent = FastAPIAgent(
         app,

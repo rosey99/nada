@@ -18,6 +18,8 @@ class ChatApp {
     this.modelSelector = document.getElementById("modelSelect");
     this.metricsContainer = document.getElementById("queryMetrics");
     this.providersList = document.getElementById("providersList");
+    this.outputSpan = document.getElementById("outputSpan");
+    this.inputSpan = document.getElementById("inputSpan");
     //
     this.messagesContainer = document.getElementById("chatMessages");
     this.messageInput = document.getElementById("messageInput");
@@ -41,10 +43,17 @@ class ChatApp {
     );
     this.messageInput.addEventListener("keypress", (e) => {
       if (e.key === "Enter") {
+        // TODO remove this and allow multi-line strings
+        //  needs tab/focus to send button instead?
         this.sendMessage();
       }
     });
-    this.modelSelector.addEventListener("change", () => this.updateModel());
+    this.modelSelector.addEventListener("change", () =>
+      this.updateModel(this.modelSelector),
+    );
+    this.providerSelector.addEventListener("change", () =>
+      this.updateModel(this.providerSelector),
+    );
   }
 
   changeTheme(theme) {
@@ -79,18 +88,20 @@ class ChatApp {
   async sendMessage() {
     const message = this.messageInput.value.trim();
     if (!message) return;
-
+    var startTime, endTime;
     // Add user message to chat UI
     this.addMessage(message, "user");
     this.messageInput.value = "";
-    this.setInputEnabled(false);
+    this.setInputEnabled(true);
     this.showTypingIndicator();
-
+    startTime = new Date();
     try {
       const response = await this.callAgentAPI(message);
+      endTime = new Date();
+      let elapsedTime = endTime - startTime;
       this.hideTypingIndicator();
       this.addMessage(response.response, "assistant");
-      this.addUsageData(response.usage);
+      this.addUsageData(response.usage, elapsedTime);
       //console.log("Got response: " + JSON.stringify(response));
       // Update conversation history from server response
       if (response.history) {
@@ -136,7 +147,9 @@ class ChatApp {
         },
       });
       console.log("adding providers json");
-      this.addProvidersOptions(await response.json());
+      let provObj = await response.json();
+      this.providerData = provObj;
+      this.addProvidersOptions(provObj);
     } catch (error) {
       //this.hideTypingIndicator();
       this.addErrorMessage("Sorry, I encountered an error: " + error.message);
@@ -146,28 +159,47 @@ class ChatApp {
       //this.addProviderList(response.body);
     }
   }
-  async updateModel() {
-    try {
-      const response = await fetch(`${this.API_BASE_URL}/agent/models_update`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          //auth: "{{DEPENDS}}",
-        },
-        body: JSON.stringify({
-          provider_name: this.providerSelector.value,
-          model_id: this.modelSelector.value,
-        }),
-      });
-      console.log("updating model");
-      this.addProvidersOptions(await response.json());
-    } catch (error) {
-      //this.hideTypingIndicator();
-      this.addErrorMessage("Sorry, I encountered an error: " + error.message);
-    } finally {
-      //this.setInputEnabled(true);
-      //console.log("adding providers");
-      //this.addProviderList(response.body);
+  async updateModel(elem) {
+    if (elem === this.providerSelector) {
+      console.log("Provider changed");
+      let provName = this.providerSelector.value;
+      for (var i = 0; i < this.providerData.length; i++) {
+        if (this.providerData[i].name != provName) {
+          this.providerData[i].is_active = false;
+        } else {
+          this.providerData[i].is_active = true;
+        }
+      }
+      this.addProvidersOptions(this.providerData);
+    }
+    if (this.modelSelector.value) {
+      try {
+        const response = await fetch(
+          `${this.API_BASE_URL}/agent/models_update`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              //auth: "{{DEPENDS}}",
+            },
+            body: JSON.stringify({
+              provider_name: this.providerSelector.value,
+              model_id: this.modelSelector.value,
+            }),
+          },
+        );
+        console.log("updating model");
+        let provObj = await response.json();
+        this.providerData = provObj;
+        this.addProvidersOptions(provObj);
+      } catch (error) {
+        //this.hideTypingIndicator();
+        this.addErrorMessage("Sorry, I encountered an error: " + error.message);
+      } finally {
+        //this.setInputEnabled(true);
+        //console.log("adding providers");
+        //this.addProviderList(response.body);
+      }
     }
   }
 
@@ -184,26 +216,75 @@ class ChatApp {
       providerOpt.text = providers_obj[i].name;
       providerOpt.value = providers_obj[i].name;
       if (providers_obj[i].is_active) {
+        //console.log("Found active provider: " + providerOpt.value);
         providerOpt.selected = true;
       }
       this.providerSelector.add(providerOpt);
-      if (providerOpt.selected) {
+      if (providerOpt.selected === true) {
+        //console.log("Selected Provider: " + providers_obj[i].name);
+        if (this.modelSelector.options.length > 0) {
+          Array.from(this.modelSelector.options).forEach((opt) => {
+            this.modelSelector.remove(opt);
+          });
+        }
+        var is_selected = new Array();
+        var is_loaded = new Array();
         for (var n = 0; n < providers_obj[i].models.length; n++) {
-          // if (this.modelSelector.options.length > 0) {
-          //   this.modelSelector.options.forEach((opt) => {
-          //     this.modelSelector.remove(opt);
-          //   });
-          // }
           const modelOpt = document.createElement("option");
+
           modelOpt.text = this.truncateToLength(
             providers_obj[i].models[n].id,
             45,
           );
           modelOpt.value = providers_obj[i].models[n].id;
-          if (providers_obj[i].models[n].model_status == "loaded") {
-            modelOpt.selected = true;
+          if (providers_obj[i].models[n].selected) {
+            console.log("Found selected model: " + modelOpt.value);
+            //modelOpt.selected = true;
+            is_selected.push(modelOpt);
+          }
+          if (providers_obj[i].models[n].model_status === "loaded") {
+            console.log("Found loaded model: " + modelOpt.value);
+            //modelOpt.selected = true;
+            is_loaded.push(modelOpt);
           }
           this.modelSelector.add(modelOpt);
+        }
+        //console.log("Providertop: " + providers_obj[i].name + " " + i);
+        if (is_selected.length === 0) {
+          // We have no selected model
+          for (var j = 0; j < is_loaded.length; j++) {
+            is_loaded[j].selected = true;
+            console.log("Selecting loaded model: " + is_loaded[j].value);
+          }
+        } else {
+          for (var j = 0; j < is_selected.length; j++) {
+            is_selected[j].selected = true;
+            console.log(
+              "Selecting pre-selected model: " + is_selected[j].value,
+            );
+          }
+        }
+        //console.log("Providerbotom: " + providers_obj[i].name + " " + i);
+        var model_id = this.modelSelector.value;
+        var provderName = this.providerSelector.value;
+        //console.log("Provider: " + providers_obj[i].name);
+        //console.log("Providersel: " + provderName);
+        //console.log("Model: " + model_id);
+
+        for (var ii = 0; ii < providers_obj[i].models.length; ii++) {
+          //console.log("Model2: " + providers_obj[i].models[ii].id);
+          //console.log("Provider2: " + providers_obj[i].name);
+          if (providers_obj[i].models[ii].id === model_id) {
+            //console.log("Model3: " + providers_obj[i].models[ii].id);
+            let inputs = Array.from(
+              providers_obj[i].models[ii].architecture.input_modalities,
+            );
+            let outputs = Array.from(
+              providers_obj[i].models[ii].architecture.output_modalities,
+            );
+            this.inputSpan.innerHTML = inputs.join(", ");
+            this.outputSpan.innerHTML = outputs.join(", ");
+          }
         }
       }
     }
@@ -211,11 +292,12 @@ class ChatApp {
     //this.scrollToBottom();
   }
 
-  addUsageData(usage_obj) {
+  addUsageData(usage_obj, elapsed_time) {
     var content = "";
     Object.keys(usage_obj).forEach((key) => {
       content += `<p>${key}: ${usage_obj[key]}</p>`;
     });
+    content += `<p>Elapsed time: ${(elapsed_time /= 1000)} seconds.`;
     //const usageDiv = document.createElement("div");
     //usageDiv.className = "metrics-message";
     this.metricsContainer.innerHTML = content;

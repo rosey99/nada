@@ -3,7 +3,7 @@ import logging
 from contextlib import asynccontextmanager
 from typing import Any, Dict, List, Optional, Union
 
-from fastapi import APIRouter, Depends, FastAPI, Header, HTTPException
+from fastapi import APIRouter, Depends, FastAPI, Header, HTTPException, UploadFile
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from pydantic_ai import RunContext, RunUsage
@@ -28,6 +28,7 @@ class AgentQuery(BaseModel):
 
     query: str
     history: Optional[list] = None
+    files: Optional[List[UploadFile]] = None
 
 
 class AgentResponse(BaseModel):
@@ -313,6 +314,8 @@ class FastAPIAgent(FastAPIDiscovery):
                 The agent can help you understand what each endpoint does and how to call it.
                 """
                 history = request.history
+                if request.files:
+                    print(f"Got {len(request.files)} files")
                 try:
                     response, history, usage = await self.chat(request.query, history)
                     return AgentResponse(

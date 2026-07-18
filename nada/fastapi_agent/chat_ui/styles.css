@@ -396,6 +396,11 @@ body.minimal .theme-selector {
     transition: all 0.3s ease;
 }
 
+ul,
+ol {
+    padding-inline-start: 20px;
+}
+
 body.minimal .message-content {
     border-radius: 12px;
 }

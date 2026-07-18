@@ -9,8 +9,9 @@ services:
       - redis-db
     volumes:
       - ${NADA_HOME}:/home:rw
-      - ${NADA_GLOBAL_READ}:/nada:ro
+      - ${NADA_GLOBAL_READ}:/home/richard:ro
     environment:
+      HOME: /home/default
       #REDIS_DATA_HOST: ${REDIS_DATA_HOST}
       REDIS_DATA_HOST: redis-db
       REDIS_DATA_PORT: ${REDIS_DATA_PORT}

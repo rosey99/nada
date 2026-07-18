@@ -47,6 +47,7 @@ class LlamaModelData(BaseModel):
     owned_by: Optional[str] = Field(description="Model owner")
     created: Optional[int] = Field(description="Creation time")
     model_status: str = Field(description="Model is loaded or unloaded")
+    selected: bool = Field(description="Model is selected for load and use, even if already loaded.", default=False)
     # for consistency with Openrouter standard
     context_size: int = Field(description="Model context length.")
     model_args: LlamaArgs
