@@ -8,7 +8,7 @@ services:
     depends_on:
       - redis-db
     volumes:
-      - ${NADA_HOME}:/home:rw
+      - ${NADA_HOME_DEFAULT}:/home/default:rw
       - ${NADA_GLOBAL_READ}:/home/richard:ro
     environment:
       HOME: /home/default
@@ -27,6 +27,37 @@ services:
       #CELERY_RESULT_URI: ${CELERY_RESULT_URI}
       APP_DB_CONNECTION_URI: ${APP_DB_CONNECTION_URI}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+
+  fastapi_agent:
+    image: nada
+    build: .
+    depends_on:
+      - redis-db
+    volumes:
+      - ${NADA_HOME_DEFAULT}:/home/default:rw
+      - ${NADA_GLOBAL_READ}:/home/richard:ro
+    environment:
+      HOME: /home/default
+      #REDIS_DATA_HOST: ${REDIS_DATA_HOST}
+      REDIS_DATA_HOST: redis-db
+      REDIS_DATA_PORT: ${REDIS_DATA_PORT}
+      REDIS_DATA_DBNUM: ${REDIS_DATA_DBNUM}
+      #REDIS_CACHE_HOST: ${REDIS_CACHE_HOST}
+      REDIS_CACHE_HOST: redis-db
+      REDIS_CACHE_PORT: ${REDIS_CACHE_PORT}
+      REDIS_CACHE_DBNUM: ${REDIS_CACHE_DBNUM}
+      DB_CONNECTION_URI: ${DB_CONNECTION_URI}
+      CELERY_BROKER_URI: redis://redis-db:6389/2
+      CELERY_RESULT_URI: redis://redis-db:6389/3
+      #CELERY_BROKER_URI: ${CELERY_BROKER_URI}
+      #CELERY_RESULT_URI: ${CELERY_RESULT_URI}
+      APP_DB_CONNECTION_URI: ${APP_DB_CONNECTION_URI}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+    entrypoint:
+      - python
+      - nada/fastapi_agent/fastapi_app.py
+    ports:
+      - "8000:8000"
 
   redis-db:
     image: docker.io/redis:latest

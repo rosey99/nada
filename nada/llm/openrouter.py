@@ -4,7 +4,7 @@ import requests
 
 from enum import Enum
 
-from langchain_openrouter import ChatOpenRouter
+#from langchain_openrouter import ChatOpenRouter
 from pydantic import BaseModel, ConfigDict, Field
 from typing import List, Optional, Set
 from pydantic_ai.models.openrouter import OpenRouterModel
@@ -98,7 +98,7 @@ def get_available_openrouter_models(provider: ModelProvider) -> ModelProvider:
     return provider
 
 
-def get_openrouter_model(model_id: str, provider: ModelProvider) -> ChatOpenRouter:
+def get_openrouter_model(model_id: str, provider: ModelProvider) -> OpenRouterModel:
     #llm_args = openrouter_llm.model_dump()
     model = OpenRouterModel(
         model_id,

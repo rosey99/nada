@@ -31,6 +31,9 @@ RUN set -ex \
         libgmp3-dev \
         libfreetype6-dev \
         openssh-client \
+        libxml2-dev \
+        libxslt-dev \
+        libmagic1 \
     " \
     && apt-get update && apt-get install -y --no-install-recommends $BUILD_DEPS
 
@@ -48,7 +51,7 @@ RUN pip install -U pip
 RUN mkdir -p /root/.ssh && ssh-keyscan github.com >> /root/.ssh/known_hosts
 
 # create app directory and add application deps
-WORKDIR /code/
+WORKDIR /home/
 COPY pyproject.toml ./
 #RUN poetry install --without dev --no-root
 
@@ -56,7 +59,7 @@ COPY pyproject.toml ./
 # TODO can this be combined into 1 step that executes if dir has changed
 COPY nada ./nada
 #RUN --mount=type=ssh pip install .
-RUN pip install .
+RUN pip install -e .
 
 # Remove the build deps
 #RUN rm -rf $POETRY_CACHE_DIR

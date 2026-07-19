@@ -17,7 +17,7 @@ from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
 #from pydantic_ai.models.openai import OpenAIChatModel
 #from pydantic_ai.providers.openai import OpenAIProvider
 
-from pydantic_ai.ext.langchain import tool_from_langchain
+#from pydantic_ai.ext.langchain import tool_from_langchain
 
 from pydantic_ai_harness import Shell, FileSystem
 
@@ -26,7 +26,7 @@ from nada.llm.common.provider import ProviderCollection
 from nada.llm.openrouter import get_openrouter_model, get_available_openrouter_models
 #from nada.models import ModelProvider
 
-from yada.tools.shell import ShellTool
+#from yada.tools.shell import ShellTool
 
 
 LOCAL_PROVIDERS = [
