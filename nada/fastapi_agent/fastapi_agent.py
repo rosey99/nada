@@ -372,19 +372,20 @@ class FastAPIAgent(FastAPIDiscovery):
         async def update_model(model_qry: ModelQuery):
             # TODO this is a mess, needs a refactor as import here breaks design
             #  need access to agent in update model endpoint, and that is a problem
+            #  maybe add to settings object parsed from seperate yaml?
             from nada.fastapi_agent.fastapi_app import providers
             provider = providers.providers[model_qry.provider_name]
-            logger.info(f"Provider: {model_qry.provider_name}")
             model = None
-            #print("provider: ", provider.name, len(provider.models))
+            logger.info(f"Found provider: {provider.name} with {len(provider.models)} models")
             provider.get_available_models(provider)
             for m in provider.models:
                 #print("modelsIDs: ", m.id)
                 if m.id == model_qry.model_id:
 
-                    model = m #provider.models[model_qry.model_id]
+                    model = m
             if not model:
-                print(f"Unable to locate model: {model_qry.model_id}")
+                # This should never happen
+                logger.error(f"Unable to locate model: {model_qry.model_id} for provider {provider.name}")
             else:
                 model = providers.get_model_obj(model_qry.model_id, model_qry.provider_name)
                 self.assistant.agent.model = model

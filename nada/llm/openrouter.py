@@ -12,7 +12,6 @@ from pydantic_ai.models.openrouter import OpenRouterModel
 from pydantic_ai.providers.openrouter import OpenRouterProvider
 
 from nada.models import ModelProvider, ModelArchitecture
-from nada.settings import settings
 
 
 class OpenRouterSortOrder(str, Enum):
@@ -98,15 +97,15 @@ def get_available_openrouter_models(provider: ModelProvider) -> ModelProvider:
 
 
 def get_openrouter_model(model_id: str, provider: ModelProvider) -> OpenRouterModel:
-    #llm_args = openrouter_llm.model_dump()
+    """
 
-    headers = {"Authorization": f"Bearer {provider.api_key}"}
+    """
     model = OpenRouterModel(
         model_id,
         provider=OpenRouterProvider(
             #base_url="https://openrouter.ai/api/v1",
             api_key=provider.api_key,
-            http_client=httpx.AsyncClient(timeout=None, headers=headers),
+            http_client=httpx.AsyncClient(timeout=None),
         ),
     )
     return model

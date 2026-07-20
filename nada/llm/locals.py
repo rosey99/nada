@@ -3,14 +3,10 @@ import logging
 import httpx
 import requests
 
-
-#from typing import List, Union
-
 from pydantic_ai.models.openai import OpenAIChatModel, ModelSettings
 from pydantic_ai.providers.openai import OpenAIProvider
 
 from nada.models import LlamaArgs, LlamaModelData, ModelProvider
-
 
 
 logger = logging.getLogger(__name__)
@@ -29,7 +25,6 @@ def get_llama_model(model_id: str, provider: ModelProvider) -> OpenAIChatModel:
             # override client timeout here
             http_client=httpx.AsyncClient(timeout=None),
         ),
-        #settings = settings,
     )
     logger.info(f'Initialized model {model_id} with settings: {str(settings)}')
     return model
@@ -40,10 +35,7 @@ def get_available_llama_models(provider: ModelProvider) -> ModelProvider:
 
     """
     url = f"{provider.models_url}"  # noqa E501
-    #print('URL: ', url)
     response = requests.get(url, timeout=provider.models_api_timeout)
-    #res = response.json()
-    #print(res)
     model_list = response.json()['data']
     new_models = []
     arg_prefix = '--'
