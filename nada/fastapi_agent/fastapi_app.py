@@ -58,7 +58,6 @@ async def list_model_providers(request: Request):
     return templates.TemplateResponse(
             request=request, name="providers.html", context={"providers": providers_list}
         )
-    #return list(providers.providers.values())
 
 @app.get("/providers_json", response_model=List[ModelProvider], tags=["providers_json"])
 async def json_model_providers(request: Request):
@@ -66,22 +65,13 @@ async def json_model_providers(request: Request):
     Retrieve model providers and models as JSON.
 
     """
-    #providers_list = list(providers.providers.values())
-    # return templates.TemplateResponse(
-    #         request=request, name="providers.html", context={"providers": providers_list}
-    #     )
+
     return list(providers.providers.values())
 
 
 providers = ProviderCollection(provider_list=LOCAL_PROVIDERS)
 
 if __name__ == "__main__":
-    # # create model for ollama server
-    # model = OpenAIModel(
-    #     "ollama3.2:3d",
-    #     base_url="http://localhost:11434/v1"
-    # )
-    #providers = ProviderCollection(provider_list=LOCAL_PROVIDERS)
 
     # modifies in place and returns
     providers.refresh_provider()

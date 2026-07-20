@@ -1,4 +1,4 @@
-import os
+import logging
 
 import httpx
 import requests
@@ -13,6 +13,8 @@ from pydantic_ai.providers.openrouter import OpenRouterProvider
 
 from nada.models import ModelProvider, ModelArchitecture
 
+
+logger = logging.getLogger(__name__)
 
 class OpenRouterSortOrder(str, Enum):
     throughput = 'throughput-high-to-low'
@@ -70,11 +72,6 @@ class OpenRouterModels(BaseModel):
 
 
 def get_available_openrouter_models(provider: ModelProvider) -> ModelProvider:
-#def get_openrouter_models(model_listing_args: OpenRouterModelListArgs
-        # TODO get the real data type for price
-        #max_price: float = 0.0,
-        #sort_order: str = 'throughput-high-to-low'
-    #)
     """
     A placeholder for now
     """
@@ -87,6 +84,7 @@ def get_available_openrouter_models(provider: ModelProvider) -> ModelProvider:
     #res = response.json()
     #print(response.text)
     model_list = response.json()['data']
+    logger.info(f'Found {len(model_list)} available Openrouter models')
     new_models = []
     for model in model_list:
         model_obj = MyOpenRouterModel(**model)
@@ -103,7 +101,6 @@ def get_openrouter_model(model_id: str, provider: ModelProvider) -> OpenRouterMo
     model = OpenRouterModel(
         model_id,
         provider=OpenRouterProvider(
-            #base_url="https://openrouter.ai/api/v1",
             api_key=provider.api_key,
             http_client=httpx.AsyncClient(timeout=None),
         ),
