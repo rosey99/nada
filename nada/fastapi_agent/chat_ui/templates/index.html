@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{{APP_TITLE}} AI Assistant</title>
+        <link rel="stylesheet" href="{{ URL_FOR_STATIC }}/new_style.css" />
+    </head>
+
+    <body class="dark">
+        <div class="main-container">
+            <!-- Left Panel: Chat Interface -->
+            <div class="chat-panel">
+                <div class="chat-header">
+                    <button class="clear-history-btn" id="clearHistoryBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                        Clear History
+                    </button>
+                    <select class="theme-selector" id="themeSelector">
+                        <option value="dark">Dark</option>
+                        <option value="minimal">Minimal</option>
+                        <option value="vibrant">Vibrant</option>
+                    </select>
+                    <h1>{{APP_TITLE}} Assistant</h1>
+                    <div class="status-indicator" id="statusIndicator"></div>
+                    <div class="history-indicator" id="historyIndicator">
+                        History: 0 messages
+                    </div>
+                </div>
+
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message assistant">
+                        <div class="message-content">
+                            👋 Hello! I'm your AI assistant. I can help you interact with {{APP_TITLE}} API queries, information, and more. I'll remember our conversation context. What would you like to know?
+                        </div>
+                    </div>
+                </div>
+
+                <div class="typing-indicator" id="typingIndicator">
+                    <div class="message-content">
+                        <span>AI is thinking</span>
+                        <div class="typing-dots">
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-input">
+                    <div class="input-container">
+                        <input type="file" id="fileInput" style="display: none" />
+                        <button title="Attach file..." onclick="document.getElementById('fileInput').click()">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 5v14M5 12l7 7 7-7"/>
+                            </svg>
+                        </button>
+                        <input type="text" id="messageInput" placeholder="Type your message here..." autocomplete="off" />
+                        <button id="sendButton">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="22" y1="2" x2="11" y2="13"/>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Provider Settings -->
+            <div class="settings-panel">
+                <div class="providers-section">
+                    <h2>Provider Settings</h2>
+                    <div id="providersStatus" class="status-message">
+                        <p>Status</p>
+                        <label for="providersSelect">Choose a Model Provider:</label>
+                        <select id="providersSelect" name="providersSelect"></select>
+                        <br />
+                        <label for="modelSelect">Choose a Model:</label>
+                        <select id="modelSelect" name="modelSelect"></select>
+                        <br />
+                        <br />
+                        <h5>Input types: <span id="inputSpan"></span></h5>
+                        <h5>Output types: <span id="outputSpan"></span></h5>
+                    </div>
+                </div>
+
+                <div class="metrics-section">
+                    <h2>Metrics</h2>
+                    <div id="queryMetrics" class="metrics-message"></div>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script>
+        <script src="{{ URL_FOR_STATIC }}/chat.js"></script>
+    </body>
+</html>
