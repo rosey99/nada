@@ -83,7 +83,6 @@ def get_available_openrouter_models(provider: ModelProvider) -> ModelProvider:
     # TODO fix this BS, move to config file
     url = f"https://openrouter.ai/api/v1/models?max_price={args.max_price}&sort={args.sort_order}"  # noqa E501
     headers = {"Authorization": f"Bearer {provider.api_key}"}
-    print(provider.api_key)
     api_timeout = provider.models_api_timeout
     response = requests.get(url, headers=headers, timeout=api_timeout)
     #res = response.json()

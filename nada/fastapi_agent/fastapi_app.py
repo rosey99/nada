@@ -93,9 +93,7 @@ if __name__ == "__main__":
         # get the loaded model
         if model.model_status == 'loaded':
             use_model = get_llama_model(model_id=model.id, provider=provider)
-            #print('Found loaded model: ', model.id, model.model_status)
-            #print(f'Context: {model.context_size}')
-        pass
+            logger.info(f'Found loaded model: {model.id}, {model.model_status}')
     if not use_model:
         model_id = 's-batman/ornith-1.0-35B-NVFP4-MTP-GGUF:MTP'
         use_model = providers.get_model_obj(model_id=model_id, provider_name=provider.name)

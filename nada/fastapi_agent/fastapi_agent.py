@@ -14,6 +14,8 @@ from nada.fastapi_agent.fastapi_discovery import FastAPIDiscovery
 from nada.models import ModelProvider
 
 
+logger = logging.getLogger(__name__)
+
 class APIResponse(BaseModel):
     """Model for API response data"""
 
@@ -372,12 +374,12 @@ class FastAPIAgent(FastAPIDiscovery):
             #  need access to agent in update model endpoint, and that is a problem
             from nada.fastapi_agent.fastapi_app import providers
             provider = providers.providers[model_qry.provider_name]
-            print("Provider: ", model_qry.provider_name)
+            logger.info(f"Provider: {model_qry.provider_name}")
             model = None
-            print("provider: ", provider.name, len(provider.models))
+            #print("provider: ", provider.name, len(provider.models))
             provider.get_available_models(provider)
             for m in provider.models:
-                print("modelsIDs: ", m.id)
+                #print("modelsIDs: ", m.id)
                 if m.id == model_qry.model_id:
 
                     model = m #provider.models[model_qry.model_id]
