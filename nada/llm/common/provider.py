@@ -32,6 +32,7 @@ class ProviderCollection:
         return provider
 
     def get_model_obj(self, model_id: str, provider_name: str):
+        print('model provider name: ', provider_name)
         model_obj = self.providers[provider_name].get_model(model_id, self.providers[provider_name])
         return model_obj
 

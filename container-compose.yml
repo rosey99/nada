@@ -27,6 +27,7 @@ services:
       #CELERY_RESULT_URI: ${CELERY_RESULT_URI}
       APP_DB_CONNECTION_URI: ${APP_DB_CONNECTION_URI}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      HOST_LLM_SERVER: host.containers.internal:8080
 
   fastapi_agent:
     image: nada
@@ -53,6 +54,8 @@ services:
       #CELERY_RESULT_URI: ${CELERY_RESULT_URI}
       APP_DB_CONNECTION_URI: ${APP_DB_CONNECTION_URI}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      HOST_LLM_SERVER: http://host.containers.internal:8080
+
     entrypoint:
       - python
       - nada/fastapi_agent/fastapi_app.py

@@ -47,7 +47,8 @@ async def root():
     """Welcome endpoint that returns basic API information"""
     return {"message": "Welcome to My Business API"}
 
-
+# TODO take this out after updating FE to use JSON endpoint
+# really just for template setup testing
 @app.get("/providers", response_class=HTMLResponse, tags=["providers"])
 async def list_model_providers(request: Request):
     """
@@ -90,8 +91,8 @@ if __name__ == "__main__":
     use_model = None
     for model in provider.models:
         # get the loaded model
-        #if model.model_status == 'loaded':
-        #    use_model = get_llama_model(model_id=model.id, provider=provider)
+        if model.model_status == 'loaded':
+            use_model = get_llama_model(model_id=model.id, provider=provider)
             #print('Found loaded model: ', model.id, model.model_status)
             #print(f'Context: {model.context_size}')
         pass

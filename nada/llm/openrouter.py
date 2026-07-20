@@ -1,5 +1,6 @@
 import os
 
+import httpx
 import requests
 
 from enum import Enum
@@ -10,12 +11,8 @@ from typing import List, Optional, Set
 from pydantic_ai.models.openrouter import OpenRouterModel
 from pydantic_ai.providers.openrouter import OpenRouterProvider
 
-from nada.models import ModelProvider
+from nada.models import ModelProvider, ModelArchitecture
 from nada.settings import settings
-
-# TODO add pydotenv and remove override in func body
-OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY')
-OPENROUTER_API_KEY = "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"  # noqa E501
 
 
 class OpenRouterSortOrder(str, Enum):
@@ -60,6 +57,7 @@ class MyOpenRouterModel(BaseModel):
     supported_parameters: Set[str] | None = None
     knowledge_cutoff: str | None = None
     expiration_date: str | None = None
+    architecture: ModelArchitecture
 
 
 class OpenRouterModels(BaseModel):
@@ -85,6 +83,7 @@ def get_available_openrouter_models(provider: ModelProvider) -> ModelProvider:
     # TODO fix this BS, move to config file
     url = f"https://openrouter.ai/api/v1/models?max_price={args.max_price}&sort={args.sort_order}"  # noqa E501
     headers = {"Authorization": f"Bearer {provider.api_key}"}
+    print(provider.api_key)
     api_timeout = provider.models_api_timeout
     response = requests.get(url, headers=headers, timeout=api_timeout)
     #res = response.json()
@@ -93,6 +92,7 @@ def get_available_openrouter_models(provider: ModelProvider) -> ModelProvider:
     new_models = []
     for model in model_list:
         model_obj = MyOpenRouterModel(**model)
+        print(model_obj.architecture.model_dump())
         new_models.append(model_obj)
     provider.models = new_models
     return provider
@@ -100,11 +100,14 @@ def get_available_openrouter_models(provider: ModelProvider) -> ModelProvider:
 
 def get_openrouter_model(model_id: str, provider: ModelProvider) -> OpenRouterModel:
     #llm_args = openrouter_llm.model_dump()
+
+    headers = {"Authorization": f"Bearer {provider.api_key}"}
     model = OpenRouterModel(
         model_id,
         provider=OpenRouterProvider(
-            #base_url=provider.prompt_url,
+            #base_url="https://openrouter.ai/api/v1",
             api_key=provider.api_key,
+            http_client=httpx.AsyncClient(timeout=None, headers=headers),
         ),
     )
     return model

@@ -8,16 +8,9 @@ from prompt_toolkit import PromptSession
 
 
 from pydantic_ai import Agent
-#from pydantic_ai.capabilities import Thinking, WebSearch
 
 from pydantic_ai.common_tools.web_fetch import web_fetch_tool
 from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
-
-#from pydantic_ai.models import ModelSettings
-#from pydantic_ai.models.openai import OpenAIChatModel
-#from pydantic_ai.providers.openai import OpenAIProvider
-
-#from pydantic_ai.ext.langchain import tool_from_langchain
 
 from pydantic_ai_harness import Shell, FileSystem
 
@@ -25,9 +18,11 @@ from nada.llm.locals import get_available_llama_models, get_llama_model
 from nada.llm.common.provider import ProviderCollection
 from nada.llm.openrouter import get_openrouter_model, get_available_openrouter_models
 #from nada.models import ModelProvider
+from nada.settings import settings
 
-#from yada.tools.shell import ShellTool
-
+# TODO move this inside settings or out to compose
+# just to support corner-case where container host
+# is also running an LLM server, llama.cpp, Ollama, etc.
 
 LOCAL_PROVIDERS = [
     {'name': "Local Llama LTV",
@@ -40,9 +35,9 @@ LOCAL_PROVIDERS = [
      'models_api_timeout': 5,
      },
      {'name': "Local Llama BSlow",
-      'prompt_url': "http://127.0.0.1:8080/v1",
-      'models_url': "http://127.0.0.1:8080/models",
-      'load_url': "http://127.0.0.1:8080/load",
+      'prompt_url': settings.HOST_LLM_SERVER + "/v1",
+      'models_url': settings.HOST_LLM_SERVER + "/models",
+      'load_url': settings.HOST_LLM_SERVER + "load",
       'support_autoload': True,
       'get_available_models': get_available_llama_models,
       'get_model': get_llama_model,
@@ -56,12 +51,13 @@ LOCAL_PROVIDERS = [
        'get_available_models': get_available_openrouter_models,
        'get_model': get_openrouter_model,
        'models_api_timeout': 5,
+       'api_key': settings.OPENROUTER_API_KEY,
        },
 ]
 
 # setup logging
 logger = logging.getLogger(__name__)
-logging.basicConfig(filename='agent.log', encoding='utf-8', level=logging.DEBUG)
+#logging.basicConfig(filename='agent.log', encoding='utf-8', level=logging.DEBUG)
 
 # TODO move this out to yaml or something
 # MCP server configuration

@@ -1,5 +1,14 @@
+# Primarily to speed up conainer builds
+# TODO Must be synced with pyproject, automate
 celery>=5.6.3
 gevent>=26.5.0
 redis>=8.0.0
 dogpile.cache>=1.5.0
-yada @ git+ssh://git@github.com/rosey99/yada.git
+#"yada @ git+ssh://git@github.com/rosey99/yada.git",
+python-dotenv>=0.9.9
+pydantic-ai-slim[openai,openrouter,duckduckgo,web-fetch,mcp]>=2.9.0
+pydantic-ai-harness>=0.6.0
+fastapi>=0.139.0
+jinja2>=3.1.6
+python-magic>=0.4.0
+markitdown>=0.1.6

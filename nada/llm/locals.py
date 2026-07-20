@@ -1,13 +1,17 @@
 import logging
 
+import httpx
 import requests
+
 
 #from typing import List, Union
 
-from pydantic_ai.models.openai import OpenAIChatModel
+from pydantic_ai.models.openai import OpenAIChatModel, ModelSettings
 from pydantic_ai.providers.openai import OpenAIProvider
 
 from nada.models import LlamaArgs, LlamaModelData, ModelProvider
+
+
 
 logger = logging.getLogger(__name__)
 
@@ -16,14 +20,18 @@ def get_llama_model(model_id: str, provider: ModelProvider) -> OpenAIChatModel:
     """
     Get a local llama.cpp model
     """
+    settings = ModelSettings(thinking=False, timeout=0)
     model = OpenAIChatModel(
         model_id,
         provider=OpenAIProvider(
             base_url=provider.prompt_url,
             api_key=provider.api_key,
+            # override client timeout here
+            http_client=httpx.AsyncClient(timeout=None),
         ),
-        #settings = ModelSettings(thinking=False)
+        #settings = settings,
     )
+    logger.info(f'Initialized model {model_id} with settings: {str(settings)}')
     return model
 
 

@@ -20,5 +20,16 @@ class Settings(BaseSettings):
     REDIS_DATA_HOST: str
     REDIS_DATA_PORT: int
     REDIS_DATA_DBNUM: int
+    SMTP_HOST: str | None = None
+    SMTP_USER: str | None = None
+    SMTP_PASSWORD: str | None = None
+    EMAILS_FROM_EMAIL: str | None = None
+    SMTP_TLS: bool = True
+    SMTP_SSL: bool = False
+    SMTP_PORT: int = 587
+    TELEGRAM_BOT_TOKEN: str | None = None
+    TELEGRAM_CHAT_ID: str | None = None
+    HOST_LLM_SERVER: str | None = None
+    OPENROUTER_API_KEY: str | None = None
 
 settings = Settings()

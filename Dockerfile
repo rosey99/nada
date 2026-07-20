@@ -52,14 +52,15 @@ RUN mkdir -p /root/.ssh && ssh-keyscan github.com >> /root/.ssh/known_hosts
 
 # create app directory and add application deps
 WORKDIR /home/
-COPY pyproject.toml ./
+COPY pyproject.toml requirements.txt ./
 #RUN poetry install --without dev --no-root
 
 # Copy the app layers separately to speed build
 # TODO can this be combined into 1 step that executes if dir has changed
 COPY nada ./nada
 #RUN --mount=type=ssh pip install .
-RUN pip install -e .
+RUN pip install -r requirements.txt
+RUN pip install --no-deps -e .
 
 # Remove the build deps
 #RUN rm -rf $POETRY_CACHE_DIR
