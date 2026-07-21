@@ -128,16 +128,11 @@ This starts an interactive agent session with:
 - Shell execution
 
 ### Running with FastAPI
+Install a python venv with the project dependencies and update LLM provider configuration (currently in simpleagent.py, and .env). Then:
 
-```python
-from fastapi import FastAPI
-from nada.fastapi_agent.fastapi_agent import FastAPIAgent
+```bash
+python nada/fastapi_agent/fastapi_app.py
 
-app = FastAPI()
-agent = FastAPIAgent(app, base_url="http://localhost:8000")
-
-# Start the agent
-uvicorn app:app --reload
 ```
 
 Access the chat interface at: `http://localhost:8000/agent/chat`
