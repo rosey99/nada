@@ -200,4 +200,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ---
 
-**Note**: This is a beta project. Some features may change in future releases.
+**Note**: This is an alpha project. Some features will change in future releases.
