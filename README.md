@@ -7,7 +7,7 @@ Essentially a fork of https://github.com/blairhudson/fastapi-agents, repurposed 
 
 Nada is a framework for building and managing AI agents that can interact with FastAPI applications and perform various tasks including web search, file system operations, and API calls (so far), using the Pydantic AI capabilities system. 
 
-Basically a test harness at this point, built to test the proposition that the app could then be used to generate usable frontend code for itself. And to benchmark results and performance for various (small-ish) open source models, for actual day-to-day development work. Certain pieces, including this document, are the work of Qwen3.5 4B running on an old laptop. Totally suficient for many tasks and agent tools, IMHO.
+Basically a test harness at this point, built to test the proposition that the app could then be used to generate usable frontend code for itself. And to benchmark results and performance for various (small-ish) open source models, for actual day-to-day development work. Certain pieces, including this document, are the work of Qwen3.5 4B running on an old laptop. Totally sufficient for many tasks and agent tools, IMHO.
 
 ## 📋 Features
 
