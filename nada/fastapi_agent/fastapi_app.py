@@ -47,6 +47,17 @@ async def root():
     """Welcome endpoint that returns basic API information"""
     return {"message": "Welcome to My Business API"}
 
+@app.get("/chat", response_class=HTMLResponse, tags=["chat"])
+async def chat_page(request: Request):
+    """
+    Main chat page.
+    """
+    context = {'APP_TITLE': "Nada Agent Chat"}
+
+    return templates.TemplateResponse(
+            request=request, name="index.html", context=context
+        )
+
 # TODO take this out after updating FE to use JSON endpoint
 # really just for template setup testing
 @app.get("/providers", response_class=HTMLResponse, tags=["providers"])
@@ -102,6 +113,8 @@ if __name__ == "__main__":
         capabilities=[Shell(), FileSystem()],
     )
     app.include_router(agent.router)
+    #app.mount("/public", StaticFiles(directory="chat_ui"), name="static2")
+
     app.mount("/static", StaticFiles(directory=PARENT_DIR_PATH + "/chat_ui"), name="static")
     # run the FastAPI app
     uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -5,10 +5,6 @@
 
 class ChatApp {
   constructor() {
-    // Configuration - Update these URLs to match your FastAPI server
-    this.API_BASE_URL = "{{API_BASE_URL}}";
-    this.URL_FOR_STATIC = "{{ URL_FOR_STATIC }}";
-
     // Conversation history
     this.conversationHistory = [];
 
@@ -40,14 +36,20 @@ class ChatApp {
   initializeEventListeners() {
     this.sendButton.addEventListener("click", () => this.sendMessage());
     this.clearHistoryBtn.addEventListener("click", () => this.clearHistory());
-    this.themeSelector.addEventListener("change", (e) => this.changeTheme(e.target.value));
+    this.themeSelector.addEventListener("change", (e) =>
+      this.changeTheme(e.target.value),
+    );
     this.messageInput.addEventListener("keypress", (e) => {
       if (e.key === "Enter") {
         this.sendMessage();
       }
     });
-    this.modelSelector.addEventListener("change", () => this.updateModel(this.modelSelector));
-    this.providerSelector.addEventListener("change", () => this.updateModel(this.providerSelector));
+    this.modelSelector.addEventListener("change", () =>
+      this.updateModel(this.modelSelector),
+    );
+    this.providerSelector.addEventListener("change", () =>
+      this.updateModel(this.providerSelector),
+    );
   }
 
   changeTheme(theme) {
@@ -115,7 +117,7 @@ class ChatApp {
 
   async getProviders() {
     try {
-      const response = await fetch(`${this.API_BASE_URL}/providers`, {
+      const response = await fetch("/providers", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -130,7 +132,7 @@ class ChatApp {
 
   async getProvidersJSON() {
     try {
-      const response = await fetch(`${this.API_BASE_URL}/providers_json`, {
+      const response = await fetch("/providers_json", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -161,19 +163,16 @@ class ChatApp {
 
     if (this.modelSelector.value) {
       try {
-        const response = await fetch(
-          `${this.API_BASE_URL}/agent/models_update`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              provider_name: this.providerSelector.value,
-              model_id: this.modelSelector.value,
-            }),
+        const response = await fetch("/agent/models_update", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
-        );
+          body: JSON.stringify({
+            provider_name: this.providerSelector.value,
+            model_id: this.modelSelector.value,
+          }),
+        });
         console.log("Updating model");
         let provObj = await response.json();
         this.providerData = provObj;
@@ -239,7 +238,9 @@ class ChatApp {
         } else {
           for (var j = 0; j < is_selected.length; j++) {
             is_selected[j].selected = true;
-            console.log("Selecting pre-selected model: " + is_selected[j].value);
+            console.log(
+              "Selecting pre-selected model: " + is_selected[j].value,
+            );
           }
         }
 
@@ -277,7 +278,7 @@ class ChatApp {
   }
 
   async callAgentAPI(message) {
-    const response = await fetch(`${this.API_BASE_URL}/agent/query`, {
+    const response = await fetch("/agent/query", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -343,7 +344,8 @@ class ChatApp {
     this.conversationHistory = [];
 
     // Clear chat messages (keep initial greeting)
-    const initialMessage = this.messagesContainer.querySelector(".message.assistant");
+    const initialMessage =
+      this.messagesContainer.querySelector(".message.assistant");
     this.messagesContainer.innerHTML = "";
     if (initialMessage) {
       this.messagesContainer.appendChild(initialMessage.cloneNode(true));
@@ -353,7 +355,10 @@ class ChatApp {
     this.updateHistoryIndicator();
 
     // Show confirmation
-    this.addMessage("✨ Conversation history cleared! Starting fresh.", "assistant");
+    this.addMessage(
+      "✨ Conversation history cleared! Starting fresh.",
+      "assistant",
+    );
   }
 
   updateHistoryIndicator() {

@@ -5,7 +5,12 @@
 /* CSS Variables for theming */
 :root {
     /* Dark Theme (Default) */
-    --bg-gradient: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #16213e 100%);
+    --bg-gradient: linear-gradient(
+        135deg,
+        #0f0f23 0%,
+        #1a1a3e 50%,
+        #16213e 100%
+    );
     --chat-bg: #121220;
     --header-bg: linear-gradient(135deg, #1e1e3a 0%, #0f0f23 100%);
     --text-color: #e8e8f5;
@@ -26,7 +31,12 @@
 
 /* Vibrant Theme */
 body.vibrant {
-    --bg-gradient: linear-gradient(135deg, #1a1a3e 0%, #2d1a4e 50%, #4e1a3e 100%);
+    --bg-gradient: linear-gradient(
+        135deg,
+        #1a1a3e 0%,
+        #2d1a4e 50%,
+        #4e1a3e 100%
+    );
     --chat-bg: #120f1a;
     --header-bg: linear-gradient(135deg, #3a1a4e 0%, #1a1a3e 100%);
     --text-color: #f5f5ff;
@@ -64,14 +74,18 @@ body.minimal {
 }
 
 /* Base Reset */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+        Arial, sans-serif;
     height: 100vh;
     display: flex;
     justify-content: center;
@@ -106,7 +120,7 @@ body {
 /* Chat Header */
 .chat-header {
     display: flex;
-    align-items: center;
+    text-align: center;
     justify-content: space-between;
     padding: 16px 20px;
     background: var(--header-bg);
@@ -133,7 +147,7 @@ body.dark .chat-header h1 {
 .clear-history-btn,
 .theme-selector {
     display: flex;
-    align-items: center;
+    align-items: stretch;
     gap: 8px;
     padding: 8px 16px;
     border-radius: 12px;
@@ -181,15 +195,20 @@ body.minimal .theme-selector:hover {
 }
 
 @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
 }
 
 /* History Indicator */
 .history-indicator {
-    position: absolute;
-    bottom: 12px;
-    left: 20px;
+    position: relative;
+    bottom: 0px;
+    left: 10px;
     font-size: 0.75rem;
     color: var(--text-muted);
     transition: var(--transition);
@@ -310,8 +329,14 @@ body.dark .message.assistant .message-content {
 }
 
 @keyframes typing {
-    0%, 60%, 100% { transform: translateY(0); }
-    30% { transform: translateY(-8px); }
+    0%,
+    60%,
+    100% {
+        transform: translateY(0);
+    }
+    30% {
+        transform: translateY(-8px);
+    }
 }
 
 /* Chat Input */
