@@ -135,7 +135,8 @@ python nada/fastapi_agent/fastapi_app.py
 
 ```
 
-Access the chat interface at: `http://localhost:8000/agent/chat`
+Access the chat interface at: `http://localhost:8000/agent/chat` 
+Or the alternative, very shiny agent generated frontend at: `http://localhost:8000/chat` 
 
 ## 🌐 API Endpoints
 
