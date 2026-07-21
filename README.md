@@ -145,9 +145,10 @@ The FastAPI agent provides the following endpoints:
 - `POST /agent/query` - Ask the AI agent about API endpoints
 - `GET /agent/chat` - Web chat interface
 - `POST /agent/models_update` - Update the model provider
+- `GET /chat` - Agent generated web chat interface, the results of the first coding test.
 
 ## 🧪 Testing
-
+If only. No tests at this time. This code is very fresh! 
 ```bash
 pytest -v --cov=nada
 ```
