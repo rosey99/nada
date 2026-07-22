@@ -9,11 +9,12 @@ Nada is a framework for building and managing AI agents that can interact with F
 
 Basically a test harness at this point, built to test the proposition that the app could then be used to generate usable frontend code for itself. And to benchmark results and performance for various (small-ish) open source models, for actual day-to-day development work. Certain pieces, including this document, are the work of Qwen3.5 4B running on an old laptop. Totally sufficient for many tasks and agent tools, IMHO.
 
-Basic example:
-<img width="1920" height="1080" alt="nada_git_20260719_112552" src="https://github.com/user-attachments/assets/13a82bf7-d990-42ac-88fc-b44a67164a9d" />
+Basic example with original UI:
+<img width="1629" height="847" alt="nada_git_20260719_crop" src="https://github.com/user-attachments/assets/3c2dddef-f69e-4648-afd0-b33aef7cd22e" />
 
-New agent generated UI example:
-<img width="1920" height="1080" alt="new_134652" src="https://github.com/user-attachments/assets/1c65e3b2-3f4e-451a-82fb-b77502238c6a" />
+
+New agent generated UI example, with local LLM servnig 2 requests siultaneously:
+<img width="1621" height="837" alt="new_134652_crop" src="https://github.com/user-attachments/assets/0f1dfcbb-6457-4ac9-b3fc-079200b86d46" />
 
 
 ## 📋 Features
