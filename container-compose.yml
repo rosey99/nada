@@ -28,6 +28,7 @@ services:
       APP_DB_CONNECTION_URI: ${APP_DB_CONNECTION_URI}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
       HOST_LLM_SERVER: host.containers.internal:8080
+      GH_TOKEN: ${GH_TOKEN}
 
   fastapi_agent:
     image: nada
@@ -55,6 +56,7 @@ services:
       APP_DB_CONNECTION_URI: ${APP_DB_CONNECTION_URI}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
       HOST_LLM_SERVER: http://host.containers.internal:8080
+      GH_TOKEN: ${GH_TOKEN}
 
     entrypoint:
       - python
