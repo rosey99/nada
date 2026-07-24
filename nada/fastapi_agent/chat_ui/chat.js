@@ -39,11 +39,11 @@ class ChatApp {
     this.themeSelector.addEventListener("change", (e) =>
       this.changeTheme(e.target.value),
     );
-    this.messageInput.addEventListener("keypress", (e) => {
-      if (e.key === "Enter") {
-        this.sendMessage();
-      }
-    });
+    // this.messageInput.addEventListener("keypress", (e) => {
+    //   if (e.key === "Enter") {
+    //     this.sendMessage();
+    //   }
+    // });
     this.modelSelector.addEventListener("change", () =>
       this.updateModel(this.modelSelector),
     );
