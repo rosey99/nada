@@ -264,7 +264,13 @@ class ChatApp {
   addUsageData(usage_obj, elapsed_time) {
     var content = "";
     Object.keys(usage_obj).forEach((key) => {
-      content += `<p>${key}: ${usage_obj[key]}</p>`;
+      if (key === "details") {
+        Object.keys(usage_obj[key]).forEach((detail_key) => {
+          content += `<p>${detail_key}: ${usage_obj[key][detail_key]}</p>`;
+        });
+      } else {
+        content += `<p>${key}: ${usage_obj[key]}</p>`;
+      }
     });
     content += `<p>Elapsed time: ${(elapsed_time / 1000).toFixed(2)} seconds.</p>`;
     this.metricsContainer.innerHTML = content;
