@@ -61,7 +61,7 @@ COPY pyproject.toml requirements.txt ./
 COPY nada ./nada
 #RUN --mount=type=ssh pip install .
 RUN pip install -r requirements.txt
-RUN pip install --no-deps -e .
+RUN pip install --no-deps --no-cache-dir -e .
 
 # Remove the build deps
 #RUN rm -rf $POETRY_CACHE_DIR
