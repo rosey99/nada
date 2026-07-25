@@ -3,7 +3,6 @@
 #  and not at application node/worker node startup. Just sayin'
 
 import os
-import sys
 
 from nada.redis.client.redis_data import red_con
 
