@@ -50,15 +50,6 @@ class ModelQuery(BaseModel):
     model_id: str
 
 
-class HistoryDeleteRequest(BaseModel):
-    """Request model for deleting messages from history"""
-
-    indices: Optional[List[int]] = None
-    clear_all: bool = False
-    role: Optional[str] = None  # "user" or "assistant"
-    last_n: Optional[int] = None  # delete last N message pairs
-
-
 class FastAPIAgent(FastAPIDiscovery):
     def __init__(
         self,
@@ -410,52 +401,5 @@ class FastAPIAgent(FastAPIDiscovery):
                       if model.id == model_qry.model_id:
                          model.model_status = 'loaded'
             return list(providers.providers.values())
-
-        @agent_router.delete("/history", response_model=AgentResponse)
-        async def delete_history_items(request: HistoryDeleteRequest):
-            """
-            Delete specific messages or groups of messages from conversation history.
-
-            Options:
-            - indices: list of message indices to delete (0-based, from current history)
-            - clear_all: delete entire history
-            - role: delete all messages of a specific role ("user" or "assistant")
-            - last_n: delete the last N message pairs (user+assistant)
-            """
-            # Get current history from the assistant
-            # We need to access the conversation history. The assistant stores it
-            # internally, so we use a dummy query to get the current history state.
-            # Actually, we need a way to access the current history.
-            # Let's use the assistant's internal history tracking.
-            current_history = getattr(self.assistant, '_conversation_history', [])
-
-            if request.clear_all:
-                current_history = []
-            elif request.indices is not None:
-                # Delete specific indices (reverse order to maintain index validity)
-                sorted_indices = sorted(request.indices, reverse=True)
-                for idx in sorted_indices:
-                    if 0 <= idx < len(current_history):
-                        current_history.pop(idx)
-            elif request.role is not None:
-                # Delete all messages of a specific role
-                current_history = [
-                    msg for msg in current_history
-                    if msg.get("role") != request.role
-                ]
-            elif request.last_n is not None and request.last_n > 0:
-                # Delete last N message pairs (2*N messages)
-                delete_count = request.last_n * 2
-                current_history = current_history[:-delete_count] if len(current_history) > delete_count else []
-
-            # Store updated history back
-            setattr(self.assistant, '_conversation_history', current_history)
-
-            return AgentResponse(
-                query="",
-                response="",
-                status="success",
-                history=current_history,
-            )
 
         return agent_router
