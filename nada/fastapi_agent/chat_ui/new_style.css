@@ -143,11 +143,19 @@ body.dark .chat-header h1 {
     font-weight: 700;
 }
 
+/* Header Buttons Container */
+.header-buttons {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
 /* Header Buttons */
 .clear-history-btn,
 .theme-selector {
     display: flex;
-    align-items: stretch;
+    align-items: center;
+    justify-content: center;
     gap: 8px;
     padding: 8px 16px;
     border-radius: 12px;
@@ -174,6 +182,87 @@ body.minimal .theme-selector {
 body.minimal .clear-history-btn:hover,
 body.minimal .theme-selector:hover {
     background: #e2e8f0;
+}
+
+/* Dropdown */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    left: 0;
+    top: 100%;
+    margin-top: 4px;
+    background: var(--chat-bg);
+    border: 1px solid var(--assistant-msg-border);
+    border-radius: 12px;
+    min-width: 220px;
+    box-shadow: var(--shadow);
+    z-index: 1000;
+    overflow: hidden;
+    transition: var(--transition);
+}
+
+.dropdown-content.show {
+    display: block;
+    animation: dropdownSlideIn 0.2s ease-out;
+}
+
+@keyframes dropdownSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dropdown-content button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 16px;
+    border: none;
+    background: transparent;
+    color: var(--text-color);
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    text-align: left;
+}
+
+.dropdown-content button:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.dropdown-content button svg {
+    flex-shrink: 0;
+    opacity: 0.7;
+}
+
+body.minimal .dropdown-content {
+    background: #ffffff;
+    border-color: #e2e8f0;
+}
+
+body.minimal .dropdown-content button:hover {
+    background: #f1f5f9;
+}
+
+body.vibrant .dropdown-content {
+    background: #1a1a2e;
+    border-color: #4e1a3e;
+}
+
+body.vibrant .dropdown-content button:hover {
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .theme-selector {
@@ -288,6 +377,83 @@ body.minimal .message.assistant .message-content {
 
 body.dark .message.assistant .message-content {
     border-bottom-left-radius: 6px;
+}
+
+/* Message Delete Button */
+.message {
+    position: relative;
+}
+
+.message-delete-btn {
+    position: absolute;
+    top: 8px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+    transition: var(--transition);
+    padding: 0;
+}
+
+.message.user .message-delete-btn {
+    right: -36px;
+}
+
+.message.assistant .message-delete-btn {
+    left: -36px;
+}
+
+.message:hover .message-delete-btn {
+    opacity: 1;
+}
+
+.message-delete-btn:hover {
+    background: rgba(239, 68, 68, 0.3);
+    color: #fca5a5;
+    transform: scale(1.1);
+}
+
+.message-delete-btn:active {
+    transform: scale(0.95);
+}
+
+body.minimal .message-delete-btn {
+    background: rgba(0, 0, 0, 0.05);
+    color: #9ca3af;
+}
+
+body.minimal .message-delete-btn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #dc2626;
+}
+
+body.dark .message-delete-btn {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+/* Message fade-out animation for deletion */
+.message.deleting {
+    animation: messageFadeOut 0.3s ease-out forwards;
+}
+
+@keyframes messageFadeOut {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.95);
+    }
 }
 
 /* Typing Indicator */
@@ -602,6 +768,11 @@ body.minimal .error-message {
         gap: 10px;
     }
 
+    .header-buttons {
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
     .clear-history-btn,
     .theme-selector {
         flex: 1;
@@ -622,6 +793,16 @@ body.minimal .error-message {
 
     .chat-header h1 {
         font-size: 1.1rem;
+    }
+
+    /* Show delete buttons on touch devices via active state */
+    .message-delete-btn {
+        opacity: 0;
+    }
+
+    .message:active .message-delete-btn,
+    .message:focus-within .message-delete-btn {
+        opacity: 1;
     }
 }
 
@@ -646,5 +827,19 @@ body.minimal .error-message {
 
     .chat-header h1 {
         font-size: 1rem;
+    }
+
+    /* On very small screens, show delete buttons always */
+    .message-delete-btn {
+        opacity: 0.6;
+        position: absolute;
+    }
+
+    .message.user .message-delete-btn {
+        right: 4px;
+    }
+
+    .message.assistant .message-delete-btn {
+        left: 4px;
     }
 }
