@@ -25,8 +25,6 @@ class ChatApp {
     this.typingIndicator = document.getElementById("typingIndicator");
     this.statusIndicator = document.getElementById("statusIndicator");
     this.clearHistoryBtn = document.getElementById("clearHistoryBtn");
-    this.deleteGroupBtn = document.getElementById("deleteGroupBtn");
-    this.deleteDropdownContent = document.getElementById("deleteDropdownContent");
     this.historyIndicator = document.getElementById("historyIndicator");
     this.themeSelector = document.getElementById("themeSelector");
 
@@ -38,12 +36,6 @@ class ChatApp {
   initializeEventListeners() {
     this.sendButton.addEventListener("click", () => this.sendMessage());
     this.clearHistoryBtn.addEventListener("click", () => this.clearHistory());
-    this.deleteGroupBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      this.toggleDeleteDropdown();
-    });
-    // Close dropdown when clicking outside
-    document.addEventListener("click", () => this.closeDeleteDropdown());
     this.themeSelector.addEventListener("change", (e) =>
       this.changeTheme(e.target.value),
     );
@@ -313,14 +305,7 @@ class ChatApp {
   addMessage(content, sender) {
     const messageDiv = document.createElement("div");
     messageDiv.className = `message ${sender}`;
-    const msgIndex = this.conversationHistory.length;
-    messageDiv.setAttribute("data-message-index", msgIndex);
     messageDiv.innerHTML = `
-      <button class="message-delete-btn" title="Delete this message" onclick="app.deleteMessage(${msgIndex}, event)">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M18 6L6 18M6 6l12 12" />
-        </svg>
-      </button>
       <div class="message-content">
         ${this.formatMessage(content)}
       </div>
@@ -330,20 +315,9 @@ class ChatApp {
   }
 
   addErrorMessage(content) {
-    const msgIndex = this.conversationHistory.length;
     const errorDiv = document.createElement("div");
-    errorDiv.className = "message error-message";
-    errorDiv.setAttribute("data-message-index", msgIndex);
-    errorDiv.innerHTML = `
-      <button class="message-delete-btn" title="Delete this message" onclick="app.deleteMessage(${msgIndex}, event)">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M18 6L6 18M6 6l12 12" />
-        </svg>
-      </button>
-      <div class="message-content">
-        ${content}
-      </div>
-    `;
+    errorDiv.className = "error-message";
+    errorDiv.textContent = content;
     this.messagesContainer.appendChild(errorDiv);
     this.scrollToBottom();
   }
@@ -380,14 +354,7 @@ class ChatApp {
       this.messagesContainer.querySelector(".message.assistant");
     this.messagesContainer.innerHTML = "";
     if (initialMessage) {
-      const cloned = initialMessage.cloneNode(true);
-      // Reset the data-message-index on the cloned element
-      cloned.setAttribute("data-message-index", "0");
-      const deleteBtn = cloned.querySelector(".message-delete-btn");
-      if (deleteBtn) {
-        deleteBtn.setAttribute("onclick", "app.deleteMessage(0, event)");
-      }
-      this.messagesContainer.appendChild(cloned);
+      this.messagesContainer.appendChild(initialMessage.cloneNode(true));
     }
 
     // Update history indicator
@@ -398,167 +365,6 @@ class ChatApp {
       "✨ Conversation history cleared! Starting fresh.",
       "assistant",
     );
-  }
-
-  // --- Delete Group Dropdown ---
-  toggleDeleteDropdown() {
-    this.deleteDropdownContent.classList.toggle("show");
-  }
-
-  closeDeleteDropdown() {
-    this.deleteDropdownContent.classList.remove("show");
-  }
-
-  // --- Delete Single Message ---
-  async deleteMessage(index, event) {
-    if (event) {
-      event.stopPropagation();
-    }
-    if (index < 0 || index >= this.conversationHistory.length) return;
-
-    // Find and animate the message element
-    const messageEl = this.messagesContainer.querySelector(
-      `[data-message-index="${index}"]`,
-    );
-    if (messageEl) {
-      messageEl.classList.add("deleting");
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      messageEl.remove();
-    }
-
-    // Remove from history
-    this.conversationHistory.splice(index, 1);
-    this.updateMessageIndices();
-    this.updateHistoryIndicator();
-
-    // Sync with server
-    try {
-      await fetch("/agent/history", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ indices: [index] }),
-      });
-    } catch (error) {
-      console.error("Failed to sync deletion with server:", error);
-    }
-  }
-
-  // --- Delete Messages by Role ---
-  async deleteMessagesByRole(role) {
-    this.closeDeleteDropdown();
-
-    // Find indices of messages with the given role (reverse order)
-    const indicesToDelete = [];
-    for (let i = this.conversationHistory.length - 1; i >= 0; i--) {
-      if (this.conversationHistory[i].role === role) {
-        indicesToDelete.push(i);
-      }
-    }
-
-    if (indicesToDelete.length === 0) return;
-
-    // Animate and remove each message
-    for (const idx of indicesToDelete) {
-      const messageEl = this.messagesContainer.querySelector(
-        `[data-message-index="${idx}"]`,
-      );
-      if (messageEl) {
-        messageEl.classList.add("deleting");
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        messageEl.remove();
-      }
-    }
-
-    // Filter history to remove messages with that role
-    this.conversationHistory = this.conversationHistory.filter(
-      (msg) => msg.role !== role,
-    );
-    this.updateMessageIndices();
-    this.updateHistoryIndicator();
-
-    // Sync with server
-    try {
-      await fetch("/agent/history", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role }),
-      });
-    } catch (error) {
-      console.error("Failed to sync deletion with server:", error);
-    }
-
-    const roleLabel = role === "user" ? "your" : "AI response";
-    this.addMessage(
-      `✨ Deleted all ${roleLabel}.`,
-      "assistant",
-    );
-  }
-
-  // --- Delete Last N Messages (pairs) ---
-  async deleteLastMessages(n) {
-    this.closeDeleteDropdown();
-
-    if (n <= 0) return;
-
-    const totalToDelete = n * 2; // user + assistant pairs
-    if (totalToDelete >= this.conversationHistory.length) {
-      // If deleting more than half the history, just clear all
-      this.clearHistory();
-      return;
-    }
-
-    const startIdx = this.conversationHistory.length - totalToDelete;
-    const indicesToDelete = [];
-    for (let i = startIdx; i < this.conversationHistory.length; i++) {
-      indicesToDelete.push(i);
-    }
-
-    // Animate and remove each message (reverse order for smooth animation)
-    for (let i = indicesToDelete.length - 1; i >= 0; i--) {
-      const idx = indicesToDelete[i];
-      const messageEl = this.messagesContainer.querySelector(
-        `[data-message-index="${idx}"]`,
-      );
-      if (messageEl) {
-        messageEl.classList.add("deleting");
-        await new Promise((resolve) => setTimeout(resolve, 80));
-        messageEl.remove();
-      }
-    }
-
-    // Truncate history
-    this.conversationHistory = this.conversationHistory.slice(0, startIdx);
-    this.updateMessageIndices();
-    this.updateHistoryIndicator();
-
-    // Sync with server
-    try {
-      await fetch("/agent/history", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ last_n: n }),
-      });
-    } catch (error) {
-      console.error("Failed to sync deletion with server:", error);
-    }
-
-    this.addMessage(
-      `✨ Deleted last ${n} conversation(s).`,
-      "assistant",
-    );
-  }
-
-  // --- Update data-message-index attributes after deletion ---
-  updateMessageIndices() {
-    const messages = this.messagesContainer.querySelectorAll(".message");
-    messages.forEach((msg, i) => {
-      msg.setAttribute("data-message-index", i);
-      // Update the delete button's onclick
-      const deleteBtn = msg.querySelector(".message-delete-btn");
-      if (deleteBtn) {
-        deleteBtn.setAttribute("onclick", `app.deleteMessage(${i}, event)`);
-      }
-    });
   }
 
   updateHistoryIndicator() {

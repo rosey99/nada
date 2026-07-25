@@ -15,56 +15,21 @@
             <!-- Left Panel: Chat Interface -->
             <div class="chat-panel">
                 <div class="chat-header">
-                    <div class="header-buttons">
-                        <button class="clear-history-btn" id="clearHistoryBtn" title="Clear all conversation history">
-                            <svg
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                            >
-                                <path
-                                    d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
-                                />
-                            </svg>
-                            Clear History
-                        </button>
-                        <div class="dropdown" id="deleteDropdown">
-                            <button class="clear-history-btn" id="deleteGroupBtn" title="Delete specific messages or groups">
-                                <svg
-                                    width="16"
-                                    height="16"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                >
-                                    <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v7M14 11v7" />
-                                </svg>
-                                Delete Messages
-                            </button>
-                            <div class="dropdown-content" id="deleteDropdownContent">
-                                <button onclick="app.deleteLastMessages(1)">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                                    Last conversation (1 pair)
-                                </button>
-                                <button onclick="app.deleteLastMessages(5)">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                                    Last 5 conversations
-                                </button>
-                                <button onclick="app.deleteMessagesByRole('user')">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                                    All my messages
-                                </button>
-                                <button onclick="app.deleteMessagesByRole('assistant')">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                                    All AI responses
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                    <button class="clear-history-btn" id="clearHistoryBtn">
+                        <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                        >
+                            <path
+                                d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                            />
+                        </svg>
+                        Clear History
+                    </button>
                     <div class="history-indicator" id="historyIndicator">
                         History: 0 messages
                     </div>
@@ -82,12 +47,7 @@
                 </div>
 
                 <div class="chat-messages" id="chatMessages">
-                    <div class="message assistant" data-message-index="0">
-                        <button class="message-delete-btn" title="Delete this message" onclick="app.deleteMessage(0, event)">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M18 6L6 18M6 6l12 12" />
-                            </svg>
-                        </button>
+                    <div class="message assistant">
                         <div class="message-content">
                             👋 Hello! I'm your AI assistant. I can help you
                             interact with {{APP_TITLE}} API queries,
