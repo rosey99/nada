@@ -66,6 +66,8 @@ services:
 
   redis-db:
     image: docker.io/redis:latest
-    command: --port 6389
+    command: --port 6389 --appendonly yes
+    volumes:
+      - ${REDIS_PERSIST_DIR}:/data:Z
     ports:
       - "6389:6389"
