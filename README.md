@@ -1,6 +1,6 @@
 # Nada
 ## Not Another Diminutive Agent
-A distributed async agent orchestration system built with Docker, Python, FastAPI, Pydantic AI, and Celery.
+A distributed async agent orchestration system built with Docker, Python, FastAPI, Pydantic AI, and Celery. Absolutely not ready for prime time, but here nonetheless as it might be helpful to others who are interested in evaluating (in particular) open source LLMs.  
 
 ## 🚀 Overview
 Essentially a fork of https://github.com/blairhudson/fastapi-agents, repurposed as an agent and LLM orchestration tool (soon) with async capabilities, multi-step planning, Redis for cache, memory, and semantic search, as well as comprehensive LLM/agent metrics. Built to provide a sufficiently powerful agent that is not confined to either a console or an IDE, and that can offload long-running workloads to an efficient async worker pool.    
