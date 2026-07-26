@@ -7,9 +7,9 @@ class ChatApp {
   constructor() {
     // Conversation history
     this.conversationHistory = [];
-
-    // Theme state (default to dark)
-    this.currentTheme = "dark";
+    this.selectedHistory = [];
+    // Theme state (default to minimal)
+    this.currentTheme = "minimal";
 
     // DOM elements
     this.providerData = null;
@@ -27,10 +27,13 @@ class ChatApp {
     this.clearHistoryBtn = document.getElementById("clearHistoryBtn");
     this.historyIndicator = document.getElementById("historyIndicator");
     this.themeSelector = document.getElementById("themeSelector");
+    this.toggleAll = document.getElementById("toggleAllMessages");
 
     this.initializeEventListeners();
     this.updateHistoryIndicator();
     this.loadTheme();
+    // reset selector toggle
+    this.toggleAll.checked = false;
   }
 
   initializeEventListeners() {
@@ -39,16 +42,14 @@ class ChatApp {
     this.themeSelector.addEventListener("change", (e) =>
       this.changeTheme(e.target.value),
     );
-    // this.messageInput.addEventListener("keypress", (e) => {
-    //   if (e.key === "Enter") {
-    //     this.sendMessage();
-    //   }
-    // });
     this.modelSelector.addEventListener("change", () =>
       this.updateModel(this.modelSelector),
     );
     this.providerSelector.addEventListener("change", () =>
       this.updateModel(this.providerSelector),
+    );
+    this.toggleAll.addEventListener("change", () =>
+      this.toggleSelectAll(this.toggleAll),
     );
   }
 
@@ -69,7 +70,7 @@ class ChatApp {
     if (window.currentTheme) {
       this.currentTheme = window.currentTheme;
     } else {
-      this.currentTheme = "dark";
+      this.currentTheme = "minimal";
     }
     document.body.className = this.currentTheme;
     this.themeSelector.value = this.currentTheme;
@@ -103,6 +104,12 @@ class ChatApp {
       this.addUsageData(response.usage, elapsedTime);
       // Update conversation history from server response
       if (response.history) {
+        Array.from(response.history).forEach((opt) => {
+          Object.keys(opt).forEach((key) => {
+            console.log(`${key}: ${opt[key]}`);
+          });
+        });
+        //console.log("resp history: " + response.history);
         this.conversationHistory = response.history;
         this.updateHistoryIndicator();
       }
@@ -306,6 +313,7 @@ class ChatApp {
     const messageDiv = document.createElement("div");
     messageDiv.className = `message ${sender}`;
     messageDiv.innerHTML = `
+      <input type="checkbox" style="margin: 1em;"></input>
       <div class="message-content">
         ${this.formatMessage(content)}
       </div>
@@ -345,26 +353,47 @@ class ChatApp {
     this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
   }
 
-  clearHistory() {
-    // Clear conversation history
-    this.conversationHistory = [];
+  toggleSelectAll(checkboxAll) {
+    const children = this.messagesContainer.children;
+    for (let i = 0; i < children.length; i++) {
+      let checkbox = children[i].children[0];
+      if (checkbox !== "undefined" && checkbox.nodeName === "INPUT") {
+        if (checkboxAll.checked) {
+          checkbox.checked = true;
+          //console.log("Cb: " + checkbox.checked); // Perform actions on the child element
+        } else {
+          checkbox.checked = false;
+        }
+      }
+    }
+  }
 
-    // Clear chat messages (keep initial greeting)
+  clearHistory() {
+    // Clear chat messages
     const initialMessage =
       this.messagesContainer.querySelector(".message.assistant");
-    this.messagesContainer.innerHTML = "";
-    if (initialMessage) {
-      this.messagesContainer.appendChild(initialMessage.cloneNode(true));
+    const children = this.messagesContainer.children;
+    let indexes = [];
+    for (let i = 0; i < children.length; i++) {
+      let checkbox = children[i].children[0];
+      if (checkbox !== "undefined" && checkbox.nodeName === "INPUT") {
+        if (checkbox.checked) {
+          indexes.push(i);
+          //console.log("Cb: " + checkbox.checked); // Perform actions on the child element
+        }
+      }
     }
-
-    // Update history indicator
+    // sort indexes in reverse order
+    indexes.sort((a, b) => b - a);
+    for (let i = 0; i < indexes.length; i++) {
+      this.messagesContainer.removeChild(
+        this.messagesContainer.children[indexes[i]],
+      );
+      this.conversationHistory.splice(indexes[i], 1);
+    }
+    // Update history indicator and reset select toggle
+    this.toggleAll.checked = false;
     this.updateHistoryIndicator();
-
-    // Show confirmation
-    this.addMessage(
-      "✨ Conversation history cleared! Starting fresh.",
-      "assistant",
-    );
   }
 
   updateHistoryIndicator() {

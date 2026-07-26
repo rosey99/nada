@@ -121,7 +121,7 @@ body {
 .chat-header {
     display: flex;
     text-align: center;
-    justify-content: space-between;
+    justify-content: flex-start;
     padding: 16px 20px;
     background: var(--header-bg);
     border-bottom: 1px solid var(--assistant-msg-border);
@@ -236,7 +236,7 @@ body.minimal .history-indicator {
 }
 
 .message.user {
-    justify-content: flex-end;
+    justify-content: flex-start;
 }
 
 .message.assistant {
@@ -244,7 +244,7 @@ body.minimal .history-indicator {
 }
 
 .message-content {
-    max-width: 75%;
+    max-width: 100%;
     padding: 14px 18px;
     border-radius: 20px;
     word-wrap: break-word;
@@ -399,6 +399,29 @@ body.dark #messageInput {
     transform: translateY(-2px);
 }
 
+#sendButton:focus-visible {
+    outline: none;
+    animation: sendButtonPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes sendButtonPulse {
+    0%,
+    100% {
+        box-shadow:
+            0 0 0 0 rgba(99, 102, 241, 0.7),
+            0 0 0 6px rgba(99, 102, 241, 0.4),
+            0 0 0 12px rgba(99, 102, 241, 0.2);
+        transform: scale(1.08);
+    }
+    50% {
+        box-shadow:
+            0 0 0 4px rgba(99, 102, 241, 0.5),
+            0 0 0 10px rgba(99, 102, 241, 0.3),
+            0 0 0 16px rgba(99, 102, 241, 0.1);
+        transform: scale(1.12);
+    }
+}
+
 #sendButton:disabled {
     background: var(--text-muted);
     cursor: not-allowed;
@@ -413,12 +436,58 @@ body.minimal #sendButton:hover:not(:disabled) {
     transform: none;
 }
 
+body.minimal #sendButton:focus-visible {
+    outline: none;
+    animation: sendButtonPulseMinimal 1.5s ease-in-out infinite;
+}
+
+@keyframes sendButtonPulseMinimal {
+    0%,
+    100% {
+        box-shadow:
+            0 0 0 0 rgba(51, 65, 85, 0.7),
+            0 0 0 6px rgba(51, 65, 85, 0.4),
+            0 0 0 12px rgba(51, 65, 85, 0.2);
+        transform: scale(1.08);
+    }
+    50% {
+        box-shadow:
+            0 0 0 4px rgba(51, 65, 85, 0.5),
+            0 0 0 10px rgba(51, 65, 85, 0.3),
+            0 0 0 16px rgba(51, 65, 85, 0.1);
+        transform: scale(1.12);
+    }
+}
+
 body.dark #sendButton {
     border-radius: 18px;
 }
 
 body.dark #sendButton:disabled {
     background: #4a5568;
+}
+
+/* Vibrant theme focus */
+body.vibrant #sendButton:focus-visible {
+    animation: sendButtonPulseVibrant 1.5s ease-in-out infinite;
+}
+
+@keyframes sendButtonPulseVibrant {
+    0%,
+    100% {
+        box-shadow:
+            0 0 0 0 rgba(217, 70, 239, 0.7),
+            0 0 0 6px rgba(217, 70, 239, 0.4),
+            0 0 0 12px rgba(217, 70, 239, 0.2);
+        transform: scale(1.08);
+    }
+    50% {
+        box-shadow:
+            0 0 0 4px rgba(217, 70, 239, 0.5),
+            0 0 0 10px rgba(217, 70, 239, 0.3),
+            0 0 0 16px rgba(217, 70, 239, 0.1);
+        transform: scale(1.12);
+    }
 }
 
 /* Settings Panel */
