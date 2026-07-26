@@ -391,7 +391,8 @@ class ChatApp {
       );
       this.conversationHistory.splice(indexes[i], 1);
     }
-    // Update history indicator
+    // Update history indicator and reset select toggle
+    this.toggleAll.checked = false;
     this.updateHistoryIndicator();
   }
 
