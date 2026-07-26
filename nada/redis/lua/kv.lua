@@ -35,9 +35,9 @@ local function remove_keys(keys, args)
         all_key_stores[kv_store] = kv_id
     end
     for k, v in pairs(all_key_stores) do
-        redis.call('SREM', k, unpack(keys))
+        local _ = redis.call('SREM', k, unpack(keys))
         local keys_remaining = redis.call('SMEMBERS', k)
-        if keys_remaining == nil then
+        if #keys_remaining == 0 then
             redis.call('SREM', v, k)
         end
     end

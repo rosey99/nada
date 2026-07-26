@@ -80,6 +80,7 @@ async def json_model_providers(request: Request):
     return list(providers.providers.values())
 
 
+
 providers = ProviderCollection(provider_list=LOCAL_PROVIDERS)
 
 if __name__ == "__main__":

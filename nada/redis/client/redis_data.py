@@ -21,8 +21,8 @@ red_con = redis.Redis(host=REDIS_DATA_HOST, port=REDIS_DATA_PORT, db=REDIS_DATA_
 class KVBase:
     def __init__(self, redis_con: redis.Redis, service_name: str):
         self.redis = redis_con
-        self.prefix = "kv"
-        self.services_key = service_name
+        self.prefix = service_name
+        #self.services_key = service_name
 
     def get_services(self) -> List[str]:
         services = self.redis.smembers(self.prefix)
@@ -31,14 +31,18 @@ class KVBase:
     def delete_service(self, service_name: str):
         # first, get the keys for service
         service_keys = self.redis.smembers(service_name)
+        print(service_keys)
         if service_keys:
-            self.redis.fcall("remove_keys", len(service_keys), service_keys)
+            try:
+                r = self.redis.fcall("remove_keys", len(service_keys), *service_keys)
+            except Exception as e:
+                print('delete error: ', e)
 
     def get_service_all(self, service_name: str) -> Dict[str, str]:
         keys = self.redis.smembers(service_name)
         kvs = dict()
         for key in keys:
-            k = key.decode().rsplit(':', maxsplit=1)[0]
+            k = key.decode().rsplit(':', maxsplit=1)[1]
             v = self.redis.get(key).decode()
             kvs[k] = v
         return kvs

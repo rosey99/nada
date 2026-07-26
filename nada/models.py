@@ -70,3 +70,9 @@ class ModelProvider(BaseModel):
     models: List[LlamaModelData] = Field(description="Hosted LLMs", default_factory=list)
     get_available_models: ImportString
     get_model: ImportString
+
+class KVStore(BaseModel):
+    """
+
+    """
+    name: str = Field(description="KV store name")
