@@ -6,10 +6,11 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from typing import List, Optional
-#from pydantic_ai.models.openai import OpenAIModel  # noqa: F401
+
 from contextlib import asynccontextmanager
 from nada.fastapi_agent.fastapi_agent import FastAPIAgent
 from nada.llm.locals import get_available_llama_models, get_llama_model
+# TODO move defined providers out to settings, or a seperate yaml file
 from nada.simple_agent import ProviderCollection, LOCAL_PROVIDERS
 from nada.models import ModelProvider
 from nada.redis.load_lua_funcs import load_funcs
@@ -20,7 +21,7 @@ from pydantic_ai_harness import Shell, FileSystem
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-logger = logging.getLogger("uvicorn")
+logger = logging.getLogger(__name__)
 PARENT_DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 
 
@@ -105,7 +106,7 @@ if __name__ == "__main__":
                model.selected = True
 
     model = use_model
-    print("Model selected: ", model.model_id)
+    logger.info(f"Model selected: {model.model_id}")
     # create the FastAPI Agent instance
     agent = FastAPIAgent(
         app,

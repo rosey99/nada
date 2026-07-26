@@ -121,7 +121,7 @@ body {
 .chat-header {
     display: flex;
     text-align: center;
-    justify-content: space-between;
+    justify-content: flex-start;
     padding: 16px 20px;
     background: var(--header-bg);
     border-bottom: 1px solid var(--assistant-msg-border);
