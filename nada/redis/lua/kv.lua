@@ -12,9 +12,9 @@ local function set_keys(keys, args)
             kv_store = b
             local _ = c
         end
-        -- add the sets
+        -- add the sets, and allow for multiple KV instances
         redis.call('SADD', kv_id, kv_store)
-        redis.call('SADD', kv_store, keys[i])
+        redis.call('SADD', kv_id .. ':' .. kv_store, keys[i])
         table.insert(all_keys_and_values, keys[i])
         table.insert(all_keys_and_values, args[i])
     end
@@ -36,7 +36,7 @@ local function remove_keys(keys, args)
     end
     for k, v in pairs(all_key_stores) do
         local _ = redis.call('SREM', k, unpack(keys))
-        local keys_remaining = redis.call('SMEMBERS', k)
+        local keys_remaining = redis.call('SMEMBERS', v .. ':' .. k)
         if #keys_remaining == 0 then
             redis.call('SREM', v, k)
         end

@@ -31,15 +31,14 @@ class KVBase:
     def delete_service(self, service_name: str):
         # first, get the keys for service
         service_keys = self.redis.smembers(service_name)
-        print(service_keys)
         if service_keys:
             try:
-                r = self.redis.fcall("remove_keys", len(service_keys), *service_keys)
+                self.redis.fcall("remove_keys", len(service_keys), *service_keys)
             except Exception as e:
-                print('delete error: ', e)
+                logger.error('Service removal error: ', e)
 
     def get_service_all(self, service_name: str) -> Dict[str, str]:
-        keys = self.redis.smembers(service_name)
+        keys = self.redis.smembers(f'{self.prefix}:{service_name}')
         kvs = dict()
         for key in keys:
             k = key.decode().rsplit(':', maxsplit=1)[1]
