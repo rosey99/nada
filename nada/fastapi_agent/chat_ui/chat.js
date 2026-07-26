@@ -7,7 +7,7 @@ class ChatApp {
   constructor() {
     // Conversation history
     this.conversationHistory = [];
-
+    this.selectedHistory = [];
     // Theme state (default to dark)
     this.currentTheme = "dark";
 
@@ -103,6 +103,12 @@ class ChatApp {
       this.addUsageData(response.usage, elapsedTime);
       // Update conversation history from server response
       if (response.history) {
+        Array.from(response.history).forEach((opt) => {
+          Object.keys(opt).forEach((key) => {
+            console.log(`${key}: ${opt[key]}`);
+          });
+        });
+        //console.log("resp history: " + response.history);
         this.conversationHistory = response.history;
         this.updateHistoryIndicator();
       }
@@ -306,6 +312,7 @@ class ChatApp {
     const messageDiv = document.createElement("div");
     messageDiv.className = `message ${sender}`;
     messageDiv.innerHTML = `
+      <input type="checkbox" style="margin: 1em;"></input>
       <div class="message-content">
         ${this.formatMessage(content)}
       </div>
@@ -347,24 +354,45 @@ class ChatApp {
 
   clearHistory() {
     // Clear conversation history
-    this.conversationHistory = [];
+    //this.conversationHistory = [];
 
     // Clear chat messages (keep initial greeting)
     const initialMessage =
       this.messagesContainer.querySelector(".message.assistant");
-    this.messagesContainer.innerHTML = "";
-    if (initialMessage) {
-      this.messagesContainer.appendChild(initialMessage.cloneNode(true));
+    const children = this.messagesContainer.children;
+    let indexes = [];
+    for (let i = 0; i < children.length; i++) {
+      console.log("childs: " + children[i].nodeName);
+      let checkbox = children[i].children[0];
+      //console.log("childschilds: " + checkbox.nodeName);
+      if (checkbox !== "undefined" && checkbox.nodeName === "INPUT") {
+        if (checkbox.checked) {
+          indexes.push(i);
+          console.log("Cb: " + checkbox.checked); // Perform actions on the child element
+        }
+      }
     }
+    // sort indexes in reverse order
+    indexes.sort((a, b) => b - a);
+    for (let i = 0; i < indexes.length; i++) {
+      this.messagesContainer.removeChild(
+        this.messagesContainer.children[indexes[i]],
+      );
+      this.conversationHistory.splice(indexes[i], 1);
+    }
+    //this.messagesContainer.innerHTML = "";
+    //if (initialMessage) {
+    //  this.messagesContainer.appendChild(initialMessage.cloneNode(true));
+    //}
 
     // Update history indicator
     this.updateHistoryIndicator();
 
     // Show confirmation
-    this.addMessage(
-      "✨ Conversation history cleared! Starting fresh.",
-      "assistant",
-    );
+    // this.addMessage(
+    //   "✨ Conversation history cleared! Starting fresh.",
+    //   "assistant",
+    // );
   }
 
   updateHistoryIndicator() {
