@@ -81,14 +81,11 @@ def get_available_openrouter_models(provider: ModelProvider) -> ModelProvider:
     headers = {"Authorization": f"Bearer {provider.api_key}"}
     api_timeout = provider.models_api_timeout
     response = requests.get(url, headers=headers, timeout=api_timeout)
-    #res = response.json()
-    #print(response.text)
     model_list = response.json()['data']
     logger.info(f'Found {len(model_list)} available Openrouter models')
     new_models = []
     for model in model_list:
         model_obj = MyOpenRouterModel(**model)
-        print(model_obj.architecture.model_dump())
         new_models.append(model_obj)
     provider.models = new_models
     return provider
