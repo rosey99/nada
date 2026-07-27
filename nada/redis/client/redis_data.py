@@ -31,6 +31,7 @@ class KVBase:
     def delete_service(self, service_name: str):
         # first, get the keys for service
         service_keys = self.redis.smembers(service_name)
+        print(service_keys)
         if service_keys:
             try:
                 self.redis.fcall("remove_keys", len(service_keys), *service_keys)
