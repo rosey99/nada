@@ -15,6 +15,7 @@
             <!-- Left Panel: Chat Interface -->
             <div class="chat-panel">
                 <div class="chat-header">
+                    <input type="checkbox" id="toggleAllMessages"></input>
                     <button class="clear-history-btn" id="clearHistoryBtn">
                         <svg
                             width="16"
@@ -43,19 +44,10 @@
                         <option value="vibrant">Vibrant</option>
                     </select>
                     <h1>{{APP_TITLE}} Assistant</h1>
-                    <div class="status-indicator" id="statusIndicator"></div>
+                    <div class="status-indicator" id="statusIndicator" style="position: absolute; right: 34%"></div>
                 </div>
 
-                <div class="chat-messages" id="chatMessages">
-                    <div class="message assistant">
-                        <div class="message-content">
-                            👋 Hello! I'm your AI assistant. I can help you
-                            interact with {{APP_TITLE}} API queries,
-                            information, and more. I'll remember our
-                            conversation context. What would you like to know?
-                        </div>
-                    </div>
-                </div>
+                <div class="chat-messages" id="chatMessages"></div>
 
                 <div class="typing-indicator" id="typingIndicator">
                     <div class="message-content">
@@ -97,7 +89,7 @@
                             placeholder="Type your message here..."
                             autocomplete="off"
                             rows="3"
-                            style="resize: vertical; overflow-y: auto;"
+                            style="resize: vertical; overflow-y: auto"
                         ></textarea>
                         <button id="sendButton">
                             <svg
