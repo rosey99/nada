@@ -1,5 +1,6 @@
-from pydantic import BaseModel, ConfigDict, Field, ImportString
-from typing import Optional, List, Set
+from pydantic import BaseModel, ConfigDict, Field, ImportString, model_validator
+from typing import Dict, Optional, List, Set
+from typing_extensions import Self
 
 class AIRequest(BaseModel):
     message: str = Field(
@@ -68,5 +69,14 @@ class ModelProvider(BaseModel):
     api_key: str = Field(description="Optional API key, required for most clients even local", default='NOT_A_REAL_KEY')
     support_autoload: Optional[bool] = Field(description="Manual model loading URL", default=True)
     models: List[LlamaModelData] = Field(description="Hosted LLMs", default_factory=list)
+    dict_models: Optional[Dict[str, LlamaModelData]] | None = Field(description="Provider models accessible by model ID, auto initialized", default=None)
     get_available_models: ImportString
     get_model: ImportString
+
+    @model_validator(mode='after')
+    def populate_models_map(self) -> Self:
+        if self.models:
+            self.dict_models = {m.id: m for m in self.models}
+            if not len(self.models) == len(self.dict_models):
+                raise ValueError("Model definition error, do you have duplicate model IDs?")
+            return self

@@ -11,10 +11,11 @@ from pydantic_ai.models import Model
 
 from nada.fastapi_agent.agents import AIAgent
 from nada.fastapi_agent.fastapi_discovery import FastAPIDiscovery
+from nada.llm.common.provider import ProviderCollection
 from nada.models import ModelProvider
 
 
-logger = logging.getLogger(__name__)
+#logger = logging.getLogger(__name__)
 
 class APIResponse(BaseModel):
     """Model for API response data"""
@@ -54,6 +55,7 @@ class FastAPIAgent(FastAPIDiscovery):
     def __init__(
         self,
         app: FastAPI,
+        providers: ProviderCollection,
         base_url: str = "http://localhost:8000",
         auth: Optional[dict] = None,
         ignore_routes: Optional[list] = None,
@@ -87,19 +89,20 @@ class FastAPIAgent(FastAPIDiscovery):
             logo_url (str): Replace FastAPI Agent logo in the chat UI with this logo_url.
             debug (bool): set log level to DEBUG. Default INFO.
         """
-        if logger is None:
-            logger = logging.getLogger(__name__)
-            if not logger.handlers:
-                handler = logging.StreamHandler()
-                handler.setFormatter(logging.Formatter(
-                    "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
-                ))
-                logger.addHandler(handler)
-            if kwargs.get("debug", False):
-                logger.setLevel(logging.DEBUG)
-            else:
-                logger.setLevel(logging.INFO)
+        # if logger is None:
+        #     logger = logging.getLogger(__name__)
+        #     if not logger.handlers:
+        #         handler = logging.StreamHandler()
+        #         handler.setFormatter(logging.Formatter(
+        #             "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+        #         ))
+        #         logger.addHandler(handler)
+        #     if kwargs.get("debug", False):
+        #         logger.setLevel(logging.DEBUG)
+        #     else:
+        #         logger.setLevel(logging.INFO)
         self.logger = logger
+        self.providers = providers
 
         super().__init__(
             app=app,
@@ -137,13 +140,13 @@ class FastAPIAgent(FastAPIDiscovery):
             self.add_app_description()
 
     def add_app_description(self):
-        logger = logging.getLogger("uvicorn")
+        #logger = logging.getLogger("uvicorn")
         existing_lifespan = self.app.router.lifespan_context
 
         @asynccontextmanager
         async def lifespan_handler(app: FastAPI):
             async with existing_lifespan(app):
-                logger.info(
+                self.logger.info(
                     f"🚀 FastAPI Agent is Running on \033[1m{self.base_url}/agent/chat\033[0m"
                 )
                 yield
@@ -373,23 +376,20 @@ class FastAPIAgent(FastAPIDiscovery):
             # TODO this is a mess, needs a refactor as import here breaks design
             #  need access to agent in update model endpoint, and that is a problem
             #  maybe add to settings object parsed from seperate yaml?
-            from nada.fastapi_agent.fastapi_app import providers
-            provider = providers.providers[model_qry.provider_name]
+            provider = self.providers.providers[model_qry.provider_name]
             model = None
-            logger.info(f"Found provider: {provider.name} with {len(provider.models)} models")
+            self.logger.info(f"Update provider -> {provider.name} with {len(provider.models)} models")
             provider.get_available_models(provider)
             for m in provider.models:
-                #print("modelsIDs: ", m.id)
                 if m.id == model_qry.model_id:
-
                     model = m
             if not model:
                 # This should never happen
-                logger.error(f"Unable to locate model: {model_qry.model_id} for provider {provider.name}")
+                self.logger.error(f"Unable to locate model: {model_qry.model_id} for provider {provider.name}")
             else:
-                model = providers.get_model_obj(model_qry.model_id, model_qry.provider_name)
+                model = self.providers.get_model_obj(model_qry.model_id, model_qry.provider_name)
                 self.assistant.agent.model = model
-            for k, v in providers.providers.items():
+            for k, v in self.providers.providers.items():
                 if k != model_qry.provider_name:
                    if v.is_active:
                       v.is_active = False
@@ -400,6 +400,6 @@ class FastAPIAgent(FastAPIDiscovery):
                          model.model_status = 'unloaded'
                       if model.id == model_qry.model_id:
                          model.model_status = 'loaded'
-            return list(providers.providers.values())
+            return list(self.providers.providers.values())
 
         return agent_router

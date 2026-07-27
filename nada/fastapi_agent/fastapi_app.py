@@ -22,6 +22,13 @@ from fastapi.templating import Jinja2Templates
 load_dotenv()
 
 logger = logging.getLogger(__name__)
+logging.basicConfig(
+    encoding='utf-8',
+    level=logging.INFO,
+    handlers=[logging.StreamHandler()],
+)
+
+
 PARENT_DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 
 
@@ -81,11 +88,9 @@ async def json_model_providers(request: Request):
     return list(providers.providers.values())
 
 
-providers = ProviderCollection(provider_list=LOCAL_PROVIDERS)
-
 if __name__ == "__main__":
 
-    # modifies in place and returns
+    providers = ProviderCollection(provider_list=LOCAL_PROVIDERS)
     providers.refresh_provider()
     provider = providers.providers['Local Llama LTV']
     provider.is_active = True
@@ -109,13 +114,15 @@ if __name__ == "__main__":
     # create the FastAPI Agent instance
     agent = FastAPIAgent(
         app,
+        providers=providers,
         model=model,
         tools = [duckduckgo_search_tool(), web_fetch_tool(max_content_length=None)],
         capabilities=[Shell(), FileSystem()],
+        logger=logger,
     )
     app.include_router(agent.router)
     #app.mount("/public", StaticFiles(directory="chat_ui"), name="static2")
 
     app.mount("/static", StaticFiles(directory=PARENT_DIR_PATH + "/chat_ui"), name="static")
     # run the FastAPI app
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000, log_level='DEBUG')
