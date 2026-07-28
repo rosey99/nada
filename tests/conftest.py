@@ -1,6 +1,5 @@
 """Global pytest configuration and shared fixtures."""
 
-import os
 import sys
 from pathlib import Path
 
@@ -9,28 +8,25 @@ import redis
 
 from nada.redis.client.redis_data import KVBase
 from nada.redis.load_lua_funcs import load_funcs
-from nada.settings import settings
+from nada.settings import Settings
 
 # Ensure the project root is on the path so imports work
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-@pytest.fixture
-def kvbase(redis_client: redis.Redis):
-    """A KVBase instance backed by the test Redis client."""
-    return KVBase(redis_con=redis_client, service_name="test_svc")
+settings = Settings(REDIS_DATA_DBNUM=15)
+load_funcs() # do this once per test run
 
 @pytest.fixture
 def redis_client():
-    """Redis client fixture for integration tests using database 15."""
+    """Redis client fixture for integration tests using test database from ."""
     client = redis.Redis(
         host=settings.REDIS_DATA_HOST,
         port=settings.REDIS_DATA_PORT,
-        db=15,
+        db=settings.REDIS_DATA_DBNUM,
     )
     # always start with a clean db
     client.flushdb()
-    load_funcs()
     yield client
     client.flushdb()
     client.close()
