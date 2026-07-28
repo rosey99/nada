@@ -13,22 +13,15 @@ from nada.llm.locals import get_available_llama_models, get_llama_model
 # TODO move defined providers out to settings, or a seperate yaml file
 from nada.simple_agent import ProviderCollection, LOCAL_PROVIDERS
 from nada.models import ModelProvider
+from nada.redis.load_lua_funcs import load_funcs
 
 from pydantic_ai.common_tools.web_fetch import web_fetch_tool
 from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
 from pydantic_ai_harness import Shell, FileSystem
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-load_dotenv()
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    encoding='utf-8',
-    level=logging.INFO,
-    handlers=[logging.StreamHandler()],
-)
-
-
 PARENT_DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 
 
@@ -88,6 +81,9 @@ async def json_model_providers(request: Request):
     return list(providers.providers.values())
 
 
+
+providers = ProviderCollection(provider_list=LOCAL_PROVIDERS)
+
 if __name__ == "__main__":
 
     providers = ProviderCollection(provider_list=LOCAL_PROVIDERS)
@@ -121,8 +117,9 @@ if __name__ == "__main__":
         logger=logger,
     )
     app.include_router(agent.router)
-    #app.mount("/public", StaticFiles(directory="chat_ui"), name="static2")
-
+    # mount static files
     app.mount("/static", StaticFiles(directory=PARENT_DIR_PATH + "/chat_ui"), name="static")
+    # initialize redis data
+    load_funcs()
     # run the FastAPI app
     uvicorn.run(app, host="0.0.0.0", port=8000, log_level='DEBUG')
