@@ -1,5 +1,6 @@
-from pydantic import BaseModel, ConfigDict, Field, ImportString
-from typing import Optional, List, Set
+from pydantic import BaseModel, ConfigDict, Field, ImportString, model_validator
+from typing import Dict, Optional, List, Set
+from typing_extensions import Self
 
 class AIRequest(BaseModel):
     message: str = Field(

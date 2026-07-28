@@ -86,7 +86,7 @@ providers = ProviderCollection(provider_list=LOCAL_PROVIDERS)
 
 if __name__ == "__main__":
 
-    # modifies in place and returns
+    providers = ProviderCollection(provider_list=LOCAL_PROVIDERS)
     providers.refresh_provider()
     provider = providers.providers['Local Llama LTV']
     provider.is_active = True
@@ -110,9 +110,11 @@ if __name__ == "__main__":
     # create the FastAPI Agent instance
     agent = FastAPIAgent(
         app,
+        providers=providers,
         model=model,
         tools = [duckduckgo_search_tool(), web_fetch_tool(max_content_length=None)],
         capabilities=[Shell(), FileSystem()],
+        logger=logger,
     )
     app.include_router(agent.router)
     # mount static files
@@ -120,4 +122,4 @@ if __name__ == "__main__":
     # initialize redis data
     load_funcs()
     # run the FastAPI app
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000, log_level='DEBUG')
