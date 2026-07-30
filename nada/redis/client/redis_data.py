@@ -21,6 +21,14 @@ red_con = redis.Redis(host=REDIS_DATA_HOST,
                       max_connections=10)
 
 
+red_pool = redis.ConnectionPool(
+    host=REDIS_DATA_HOST,
+    port=REDIS_DATA_PORT,
+    db=REDIS_DATA_DBNUM,
+    max_connections=10
+)
+
+
 class KVBase:
     def __init__(self, redis_con: redis.Redis, service_prefix: str):
         self.redis = redis_con

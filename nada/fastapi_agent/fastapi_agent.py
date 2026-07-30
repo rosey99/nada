@@ -14,7 +14,7 @@ from nada.fastapi_agent.fastapi_discovery import FastAPIDiscovery
 from nada.llm.common.provider import ProviderCollection
 from nada.models import ModelProvider
 
-
+from nada.deps import SessionDep
 #logger = logging.getLogger(__name__)
 
 class APIResponse(BaseModel):
@@ -313,11 +313,13 @@ class FastAPIAgent(FastAPIDiscovery):
         else:
 
             @agent_router.post("/query", response_model=AgentResponse)
-            async def query_ai_agent(request: AgentQuery):
+            async def query_ai_agent(request: AgentQuery, session: SessionDep):
                 """
                 Ask the AI agent about available API endpoints and how to use them.
                 The agent can help you understand what each endpoint does and how to call it.
                 """
+                r = await session.get('test')
+                print('deps test:', r)
                 history = request.history
                 if request.files:
                     print(f"Got {len(request.files)} files")
