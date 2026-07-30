@@ -22,6 +22,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, handlers=[logging.StreamHandler()])
 PARENT_DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 
 
