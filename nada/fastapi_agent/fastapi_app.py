@@ -9,7 +9,7 @@ from typing import List, Optional
 
 from contextlib import asynccontextmanager
 from nada.fastapi_agent.fastapi_agent import FastAPIAgent
-from nada.llm.locals import get_available_llama_models, get_llama_model
+from nada.llm.openai_compat import get_available_llama_models, get_llama_model
 # TODO move defined providers out to settings, or a seperate yaml file
 from nada.simple_agent import ProviderCollection, LOCAL_PROVIDERS
 from nada.models import ModelProvider

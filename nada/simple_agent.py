@@ -14,7 +14,7 @@ from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
 
 from pydantic_ai_harness import Shell, FileSystem
 
-from nada.llm.locals import get_available_llama_models, get_llama_model
+from nada.llm.openai_compat import get_available_llama_models, get_llama_model
 from nada.llm.common.provider import ProviderCollection
 from nada.llm.openrouter import get_openrouter_model, get_available_openrouter_models
 #from nada.models import ModelProvider
