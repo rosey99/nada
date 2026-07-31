@@ -17,6 +17,7 @@ class ChatApp {
     this.modelSelector = document.getElementById("modelSelect");
     this.metricsContainer = document.getElementById("queryMetrics");
     this.providersList = document.getElementById("providersList");
+    this.providerContent = document.getElementById("providersContent");
     this.outputSpan = document.getElementById("outputSpan");
     this.inputSpan = document.getElementById("inputSpan");
     this.messagesContainer = document.getElementById("chatMessages");
@@ -122,21 +123,6 @@ class ChatApp {
     }
   }
 
-  async getProviders() {
-    try {
-      const response = await fetch("/providers", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      console.log("Adding providers");
-      this.addProviderList(await response.text());
-    } catch (error) {
-      this.addErrorMessage("Sorry, I encountered an error: " + error.message);
-    }
-  }
-
   async getProvidersJSON() {
     try {
       const response = await fetch("/providers_json", {
@@ -149,6 +135,7 @@ class ChatApp {
       let provObj = await response.json();
       this.providerData = provObj;
       this.addProvidersOptions(provObj);
+      this.addProviderList(provObj);
     } catch (error) {
       this.addErrorMessage("Sorry, I encountered an error: " + error.message);
     }
@@ -283,11 +270,14 @@ class ChatApp {
     this.metricsContainer.innerHTML = content;
   }
 
-  addProviderList(content) {
-    const providerDiv = document.createElement("div");
-    providerDiv.className = "status-message";
+  addProviderList(provObj) {
+    const providerDiv = this.providerContent;
+    var content = "";
+    for (var i = 0; i < provObj.length; i++) {
+      console.log("Found provider J: " + provObj[i].name + " - " + i);
+      content += `<p>${provObj[i].name} is ${provObj[i].status} with ${provObj[i].models.length} models</p>`;
+    }
     providerDiv.innerHTML = content;
-    this.providersList.appendChild(providerDiv);
   }
 
   async callAgentAPI(message) {
@@ -405,6 +395,5 @@ class ChatApp {
 // Initialize the chat app when the page loads
 document.addEventListener("DOMContentLoaded", () => {
   const app = new ChatApp();
-  app.getProviders();
   app.getProvidersJSON();
 });

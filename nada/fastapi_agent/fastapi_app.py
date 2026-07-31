@@ -62,15 +62,15 @@ async def chat_page(request: Request):
 
 # TODO take this out after updating FE to use JSON endpoint
 # really just for template setup testing
-@app.get("/providers", response_class=HTMLResponse, tags=["providers"])
-async def list_model_providers(request: Request):
-    """
-    Retrieve model providers and models as an html fragment. Deprecated.
-    """
-    providers_list = list(providers.providers.values())
-    return templates.TemplateResponse(
-            request=request, name="providers.html", context={"providers": providers_list}
-        )
+# @app.get("/providers", response_class=HTMLResponse, tags=["providers"])
+# async def list_model_providers(request: Request):
+#     """
+#     Retrieve model providers and models as an html fragment. Deprecated.
+#     """
+#     providers_list = list(providers.providers.values())
+#     return templates.TemplateResponse(
+#             request=request, name="providers.html", context={"providers": providers_list}
+#         )
 
 @app.get("/providers_json", response_model=List[ModelProvider], tags=["providers_json"])
 async def json_model_providers(request: Request):
