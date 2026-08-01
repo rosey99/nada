@@ -53,7 +53,7 @@ RUN mkdir -p /root/.ssh && ssh-keyscan github.com >> /root/.ssh/known_hosts
 
 # create app directory and add application deps
 WORKDIR /home/
-COPY pyproject.toml requirements.txt ./
+COPY pyproject.toml requirements.txt $PROVIDER_CONFIG_PATH ./
 
 # Copy the app layers separately to speed build
 #RUN --mount=type=ssh pip install .
