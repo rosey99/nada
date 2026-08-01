@@ -4,12 +4,11 @@ import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
-from pydantic import BaseModel
-from typing import List, Optional
-
+#from pydantic import BaseModel
+from typing import List
 from contextlib import asynccontextmanager
 from nada.fastapi_agent.fastapi_agent import FastAPIAgent
-from nada.llm.openai_compat import get_available_llama_models, get_llama_model
+#from nada.llm.openai_compat import get_available_llama_models, get_llama_model
 # TODO move defined providers out to settings, or a seperate yaml file
 from nada.settings import providers   #simple_agent import ProviderCollection, LOCAL_PROVIDERS
 from nada.models import ModelProvider
@@ -81,7 +80,7 @@ if __name__ == "__main__":
     for model in provider.models:
         # get the loaded model
         if model.model_status == 'loaded':
-            use_model = get_llama_model(model_id=model.id, provider=provider)
+            use_model = provider.get_model(model_id=model.id, provider=provider)
             logger.info(f'Found loaded model: {model.id}, {model.model_status}')
     if not use_model:
         model_id = 's-batman/ornith-1.0-35B-NVFP4-MTP-GGUF:MTP'

@@ -14,11 +14,7 @@ from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
 
 from pydantic_ai_harness import Shell, FileSystem
 
-from nada.llm.openai_compat import get_available_llama_models, get_llama_model
-from nada.llm.common.provider import ProviderCollection
-from nada.llm.openrouter import get_openrouter_model, get_available_openrouter_models
-#from nada.models import ModelProvider
-from nada.settings import settings
+from nada.settings import providers
 
 # TODO move this inside settings or out to compose
 # just to support corner-case where container host
@@ -64,7 +60,7 @@ async def interactive_shell(prompt_str: str):
 def main() -> None:
 #     """Setup and run the interactive agent loop."""
     # Get providers, start with local
-    providers = settings.providers
+    #providers = settings.providers
 
     # modifies in place and returns
     providers.refresh_provider()
@@ -74,7 +70,7 @@ def main() -> None:
     for model in provider.models:
         # get the loaded model
         if model.model_status == 'loaded':
-            use_model = get_llama_model(model_id=model.id, provider=provider)
+            use_model = provider.get_model(model.id, provider)
             #print('Found loaded model: ', model.id, model.model_status)
             #print(f'Context: {model.context_size}')
     if not use_model:
