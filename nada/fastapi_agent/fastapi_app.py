@@ -11,7 +11,7 @@ from contextlib import asynccontextmanager
 from nada.fastapi_agent.fastapi_agent import FastAPIAgent
 from nada.llm.openai_compat import get_available_llama_models, get_llama_model
 # TODO move defined providers out to settings, or a seperate yaml file
-from nada.simple_agent import ProviderCollection, LOCAL_PROVIDERS
+from nada.settings import providers   #simple_agent import ProviderCollection, LOCAL_PROVIDERS
 from nada.models import ModelProvider
 from nada.redis.load_lua_funcs import load_funcs
 
@@ -71,12 +71,8 @@ async def json_model_providers(request: Request):
     return list(providers.providers.values())
 
 
-
-providers = ProviderCollection(provider_list=LOCAL_PROVIDERS)
-
 if __name__ == "__main__":
 
-    providers = ProviderCollection(provider_list=LOCAL_PROVIDERS)
     providers.refresh_provider()
     provider = providers.providers['Local Llama LTV']
     provider.is_active = True
