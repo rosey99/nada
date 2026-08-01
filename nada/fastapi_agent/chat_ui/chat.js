@@ -13,6 +13,7 @@ class ChatApp {
 
     // DOM elements
     this.providerData = null;
+    this.providersContent = document.getElementById("providersContent");
     this.providerSelector = document.getElementById("providersSelect");
     this.modelSelector = document.getElementById("modelSelect");
     this.metricsContainer = document.getElementById("queryMetrics");
@@ -271,11 +272,15 @@ class ChatApp {
   }
 
   addProviderList(provObj) {
-    const providerDiv = this.providerContent;
+    const providerDiv = this.providersContent;
     var content = "";
     for (var i = 0; i < provObj.length; i++) {
       console.log("Found provider J: " + provObj[i].name + " - " + i);
-      content += `<p>${provObj[i].name} is ${provObj[i].status} with ${provObj[i].models.length} models</p>`;
+      let spanColor = "blue";
+      if (provObj[i].status === "OFFLINE") {
+        spanColor = "red";
+      }
+      content += `<p>${provObj[i].name} is <span style="color: ${spanColor};">${provObj[i].status}</span> with ${provObj[i].models.length} models</p>`;
     }
     providerDiv.innerHTML = content;
   }
