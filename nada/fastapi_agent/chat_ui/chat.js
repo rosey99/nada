@@ -298,7 +298,13 @@ class ChatApp {
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      //throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      this.addErrorMessage(
+        "Sorry, I encountered an error: " +
+          response.status +
+          " -> " +
+          response.statusText,
+      );
     }
 
     return await response.json();
