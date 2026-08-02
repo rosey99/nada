@@ -1,14 +1,17 @@
-#from typing import List
-
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from fastapi.templating import Jinja2Templates
 
 from nada import PARENT_DIR_PATH, ROOT_DIR_PATH
+
 from nada.llm.common.provider import ProviderCollection
 
+import logging
 import json
+
+
+logger = logging.getLogger(__name__)
 
 
 def load_providers():
@@ -24,8 +27,42 @@ def load_providers():
         if provider.get("api_key") is not None:
             provider["api_key"] = getattr(settings, provider["api_key"])
     providers = ProviderCollection(provider_list=provider_config)
+    providers.refresh_provider()
+    selected_provider = None
+    selected_model = None
     if settings.PROVIDER_DEFAULT:
-        providers.providers[settings.PROVIDER_DEFAULT].is_active = True
+        try:
+            def_provider = providers.providers[settings.PROVIDER_DEFAULT]
+        except KeyError:
+            raise RuntimeError(f"Invalid default provider: {settings.PROVIDER_DEFAULT}, verify provider configuration at {config_path}")
+        if len(def_provider.models) > 0:  # provider is offline
+            selected_provider = def_provider
+            selected_provider.is_active = True
+            if settings.PROVIDER_MODEL_DEFAULT:
+                # TODO, once again. . .make this a dict
+                for model in selected_provider.models:
+                    if model.id == settings.PROVIDER_MODEL_DEFAULT:
+                        model.selected = True
+                        selected_model = model.id
+            else:
+                # get the first model
+                selected_model = selected_provider.models[0]
+                print(f"Selected first available model for provider {settings.PROVIDER_DEFAULT}")
+        else:
+            # TODO add logging
+            print("Default provider has 0 models available")
+            # get the first availble provider with a valid model, or exit
+            selected_provider = None
+    if selected_provider is None:
+        # try to get the first availble provider with a valid model, or exit
+        for name, provider in providers.providers.items():
+            if len(provider.models) > 0:
+                selected_provider = provider
+                selected_model = selected_provider.models[0]
+                selected_model.selected = True
+                break
+    if selected_provider is None:
+        raise RuntimeError(f"No valid provider and model configuration found at {config_path}")
     return providers
 
 
@@ -38,7 +75,6 @@ class Settings(BaseSettings):
     )
     log_level: str = Field(default="info", description="Logging level")
     #model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
-    PROVIDER_CONFIG_PATH: str
     CELERY_RESULT_URI: str
     CELERY_BROKER_URI: str
     REDIS_CACHE_HOST: str
@@ -50,6 +86,7 @@ class Settings(BaseSettings):
     # providers
     PROVIDER_CONFIG_PATH: str
     PROVIDER_DEFAULT: str | None = None
+    PROVIDER_MODEL_DEFAULT: str | None = None
     # optional
     SMTP_HOST: str | None = None
     SMTP_USER: str | None = None
@@ -61,7 +98,6 @@ class Settings(BaseSettings):
     TELEGRAM_BOT_TOKEN: str | None = None
     TELEGRAM_CHAT_ID: str | None = None
     OPENROUTER_API_KEY: str | None = None
-
 
 
 settings = Settings()

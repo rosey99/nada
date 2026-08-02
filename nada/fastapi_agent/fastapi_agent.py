@@ -12,43 +12,10 @@ from pydantic_ai.models import Model
 from nada.fastapi_agent.agents import AIAgent
 from nada.fastapi_agent.fastapi_discovery import FastAPIDiscovery
 from nada.llm.common.provider import ProviderCollection
-from nada.models import ModelProvider
-
-from nada.deps import SessionDep
-#logger = logging.getLogger(__name__)
-
-class APIResponse(BaseModel):
-    """Model for API response data"""
-
-    status_code: int
-    data: Any
-    headers: Dict[str, str]
-    error: Optional[str] = None
+from nada.models import ModelProvider, APIResponse, AgentQuery, AgentResponse, ModelQuery
 
 
-class AgentQuery(BaseModel):
-    """Request model for agent queries"""
 
-    query: str
-    history: Optional[list] = None
-    files: Optional[List[UploadFile]] = None
-
-
-class AgentResponse(BaseModel):
-    """Response model for agent queries"""
-
-    query: str
-    response: str
-    status: str = "success"
-    error: Optional[str] = None
-    history: Optional[list] = None
-    usage: Optional[RunUsage] = None
-
-class ModelQuery(BaseModel):
-    """Request model for model choice update"""
-
-    provider_name: str
-    model_id: str
 
 
 class FastAPIAgent(FastAPIDiscovery):
@@ -133,11 +100,11 @@ class FastAPIAgent(FastAPIDiscovery):
         )
 
         self.assistant = self.get_ai_assistant(**kwargs)
-        self.router = self.get_agent_router()
+        #self.router = self.get_agent_router()
 
-        if include_router:
-            self.app.include_router(self.router)
-            self.add_app_description()
+        #if include_router:
+        #    self.app.include_router(self.router)
+        #    self.add_app_description()
 
     def add_app_description(self):
         #logger = logging.getLogger("uvicorn")
@@ -277,131 +244,131 @@ class FastAPIAgent(FastAPIDiscovery):
                 status_code=401, detail=f"Could not validate {_depends}"
             )
 
-    def get_agent_router(self):
-        agent_router = APIRouter(prefix="/agent", tags=["AI Agent"])
+    # def get_agent_router(self):
+    #     agent_router = APIRouter(prefix="/agent", tags=["AI Agent"])
 
-        if self.depends is not None:
+    #     if self.depends is not None:
 
-            @agent_router.post("/query", response_model=AgentResponse)
-            async def query_ai_agent(
-                request: AgentQuery, auth: str = Depends(self.verify_dependencies)
-            ):
-                """
-                Ask the AI agent about available API endpoints and how to use them.
-                The agent can help you understand what each endpoint does and how to call it.
-                """
-                history = request.history
-                try:
-                    response, history, usage = await self.chat(request.query, history)
-                    return AgentResponse(
-                        query=request.query,
-                        response=response,
-                        status="success",
-                        history=history,
-                        usage=usage,
-                    )
-                except HTTPException:
-                    raise
-                except Exception as e:
-                    return AgentResponse(
-                        query=request.query,
-                        response="",
-                        status="error",
-                        error=str(e),
-                        history=history,
-                    )
-        else:
+    #         @agent_router.post("/query", response_model=AgentResponse)
+    #         async def query_ai_agent(
+    #             request: AgentQuery, auth: str = Depends(self.verify_dependencies)
+    #         ):
+    #             """
+    #             Ask the AI agent about available API endpoints and how to use them.
+    #             The agent can help you understand what each endpoint does and how to call it.
+    #             """
+    #             history = request.history
+    #             try:
+    #                 response, history, usage = await self.chat(request.query, history)
+    #                 return AgentResponse(
+    #                     query=request.query,
+    #                     response=response,
+    #                     status="success",
+    #                     history=history,
+    #                     usage=usage,
+    #                 )
+    #             except HTTPException:
+    #                 raise
+    #             except Exception as e:
+    #                 return AgentResponse(
+    #                     query=request.query,
+    #                     response="",
+    #                     status="error",
+    #                     error=str(e),
+    #                     history=history,
+    #                 )
+    #     else:
 
-            @agent_router.post("/query", response_model=AgentResponse)
-            async def query_ai_agent(request: AgentQuery, session: SessionDep):
-                """
-                Ask the AI agent about available API endpoints and how to use them.
-                The agent can help you understand what each endpoint does and how to call it.
-                """
-                r = await session.get('test')
-                print('deps test:', r)
-                history = request.history
-                if request.files:
-                    print(f"Got {len(request.files)} files")
-                try:
-                    response, history, usage = await self.chat(request.query, history)
-                    return AgentResponse(
-                        query=request.query,
-                        response=response,
-                        status="success",
-                        history=history,
-                        usage=usage
-                    )
-                except HTTPException:
-                    raise
-                except Exception as e:
-                    return AgentResponse(
-                        query=request.query,
-                        response="",
-                        status="error",
-                        error=str(e),
-                        history=history,
-                    )
+    #         @agent_router.post("/query", response_model=AgentResponse)
+    #         async def query_ai_agent(request: AgentQuery):
+    #             """
+    #             Ask the AI agent about available API endpoints and how to use them.
+    #             The agent can help you understand what each endpoint does and how to call it.
+    #             """
+    #             #r = await session.get('test')
+    #             #print('deps test:', r)
+    #             history = request.history
+    #             if request.files:
+    #                 print(f"Got {len(request.files)} files")
+    #             try:
+    #                 response, history, usage = await self.chat(request.query, history)
+    #                 return AgentResponse(
+    #                     query=request.query,
+    #                     response=response,
+    #                     status="success",
+    #                     history=history,
+    #                     usage=usage
+    #                 )
+    #             except HTTPException:
+    #                 raise
+    #             except Exception as e:
+    #                 return AgentResponse(
+    #                     query=request.query,
+    #                     response="",
+    #                     status="error",
+    #                     error=str(e),
+    #                     history=history,
+    #                 )
 
-        @agent_router.get("/chat", response_class=HTMLResponse)
-        async def chat_interface():
-            import os
-            # TODO all of this can be moved to a template or external FE
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            html_path = os.path.join(current_dir, "chat_ui", "index.html")
-            with open(html_path, "r", encoding="utf-8") as f:
-                html_content = f.read()
+    #     @agent_router.get("/chat", response_class=HTMLResponse)
+    #     async def chat_interface():
+    #         import os
+    #         # TODO all of this can be moved to a template or external FE
+    #         current_dir = os.path.dirname(os.path.abspath(__file__))
+    #         html_path = os.path.join(current_dir, "chat_ui", "index.html")
+    #         with open(html_path, "r", encoding="utf-8") as f:
+    #             html_content = f.read()
 
-            css_path = os.path.join(current_dir, "chat_ui", "styles.css")
-            with open(css_path, "r", encoding="utf-8") as f:
-                css_content = f.read()
-            html_content = html_content.replace("/*{{CSS}}*/", css_content)
+    #         css_path = os.path.join(current_dir, "chat_ui", "styles.css")
+    #         with open(css_path, "r", encoding="utf-8") as f:
+    #             css_content = f.read()
+    #         html_content = html_content.replace("/*{{CSS}}*/", css_content)
 
-            js_path = os.path.join(current_dir, "chat_ui", "script.js")
-            with open(js_path, "r", encoding="utf-8") as f:
-                js_content = f.read()
-            html_content = html_content.replace("/*{{JAVASCRIPT}}*/", js_content)
+    #         js_path = os.path.join(current_dir, "chat_ui", "script.js")
+    #         with open(js_path, "r", encoding="utf-8") as f:
+    #             js_content = f.read()
+    #         html_content = html_content.replace("/*{{JAVASCRIPT}}*/", js_content)
 
-            # Replace placeholders
-            html_content = html_content.replace("{{LOGO_URL}}", self.logo_url)
-            html_content = html_content.replace("{{API_BASE_URL}}", self.base_url)
-            html_content = html_content.replace("{{APP_TITLE}}", self.app.title)
-            if self.depends is not None:
-                html_content = html_content.replace(
-                    "{{DEPENDS}}", json.dumps(self.depends)
-                )
+    #         # Replace placeholders
+    #         html_content = html_content.replace("{{LOGO_URL}}", self.logo_url)
+    #         html_content = html_content.replace("{{API_BASE_URL}}", self.base_url)
+    #         html_content = html_content.replace("{{APP_TITLE}}", self.app.title)
+    #         if self.depends is not None:
+    #             html_content = html_content.replace(
+    #                 "{{DEPENDS}}", json.dumps(self.depends)
+    #             )
 
-            return html_content
+    #         return html_content
 
-        @agent_router.post("/models_update", response_model=List[ModelProvider])
-        async def update_model(model_qry: ModelQuery):
-            # TODO this is a mess, needs a refactor as import here breaks design
-            #  need access to agent in update model endpoint, and that is a problem
-            #  maybe add to settings object parsed from seperate yaml?
-            provider = self.providers.providers[model_qry.provider_name]
-            model = None
-            self.logger.info(f"Update provider -> {provider.name} with {len(provider.models)} models")
-            provider.get_available_models(provider)
-            for m in provider.models:
-                if m.id == model_qry.model_id:
-                    model = m
-            if not model:
-                # This should never happen
-                self.logger.error(f"Unable to locate model: {model_qry.model_id} for provider {provider.name}")
-            else:
-                model = self.providers.get_model_obj(model_qry.model_id, model_qry.provider_name)
-                self.assistant.agent.model = model
-            for k, v in self.providers.providers.items():
-                if k != model_qry.provider_name:
-                   if v.is_active:
-                      v.is_active = False
-                else:
-                   v.is_active = True
-                   for model in v.models:
-                      if model.id != model_qry.model_id and model.model_status == 'loaded':
-                         model.model_status = 'unloaded'
-                      if model.id == model_qry.model_id:
-                         model.model_status = 'loaded'
-            return list(self.providers.providers.values())
+    #     @agent_router.post("/models_update", response_model=List[ModelProvider])
+    #     async def update_model(model_qry: ModelQuery):
+    #         # TODO this is a mess, needs a refactor as import here breaks design
+    #         #  need access to agent in update model endpoint, and that is a problem
+    #         #  maybe add to settings object parsed from seperate yaml?
+    #         provider = self.providers.providers[model_qry.provider_name]
+    #         model = None
+    #         self.logger.info(f"Update provider -> {provider.name} with {len(provider.models)} models")
+    #         provider.get_available_models(provider)
+    #         for m in provider.models:
+    #             if m.id == model_qry.model_id:
+    #                 model = m
+    #         if not model:
+    #             # This should never happen
+    #             self.logger.error(f"Unable to locate model: {model_qry.model_id} for provider {provider.name}")
+    #         else:
+    #             model = self.providers.get_model_obj(model_qry.model_id, model_qry.provider_name)
+    #             self.assistant.agent.model = model
+    #         for k, v in self.providers.providers.items():
+    #             if k != model_qry.provider_name:
+    #                if v.is_active:
+    #                   v.is_active = False
+    #             else:
+    #                v.is_active = True
+    #                for model in v.models:
+    #                   if model.id != model_qry.model_id and model.model_status == 'loaded':
+    #                      model.model_status = 'unloaded'
+    #                   if model.id == model_qry.model_id:
+    #                      model.model_status = 'loaded'
+    #         return list(self.providers.providers.values())
 
-        return agent_router
+    #     return agent_router

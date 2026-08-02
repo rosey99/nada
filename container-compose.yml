@@ -28,6 +28,7 @@ services:
       APP_DB_CONNECTION_URI: ${APP_DB_CONNECTION_URI}
       PROVIDER_CONFIG_PATH: providers.json
       PROVIDER_DEFAULT: ${PROVIDER_DEFAULT}
+      PROVIDER_MODEL_DEFAULT: ${PROVIDER_MODEL_DEFAULT}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
       GH_TOKEN: ${GH_TOKEN}
 
@@ -57,12 +58,17 @@ services:
       APP_DB_CONNECTION_URI: ${APP_DB_CONNECTION_URI}
       PROVIDER_CONFIG_PATH: providers.json
       PROVIDER_DEFAULT: ${PROVIDER_DEFAULT}
+      PROVIDER_MODEL_DEFAULT: ${PROVIDER_MODEL_DEFAULT}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
       GH_TOKEN: ${GH_TOKEN}
 
     entrypoint:
-      - python
-      - nada/fastapi_agent/fastapi_app.py
+      - uvicorn
+      - nada.main:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
     ports:
       - "8000:8000"
 

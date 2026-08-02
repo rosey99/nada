@@ -126,7 +126,7 @@ class ChatApp {
 
   async getProvidersJSON() {
     try {
-      const response = await fetch("/providers_json", {
+      const response = await fetch("/api/v1/providers", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -158,7 +158,7 @@ class ChatApp {
 
     if (this.modelSelector.value) {
       try {
-        const response = await fetch("/agent/models_update", {
+        const response = await fetch("/agent/v1/models_update", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -286,7 +286,7 @@ class ChatApp {
   }
 
   async callAgentAPI(message) {
-    const response = await fetch("/agent/query", {
+    const response = await fetch("/agent/v1/query", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

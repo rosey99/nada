@@ -69,4 +69,4 @@ RUN apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false
     && rm -rf /var/lib/apt/lists/*
 
 # start celery
-ENTRYPOINT ["celery", "-A", "nada.nada_celery.celery:app", "worker", "--pool",  "gevent", "-l", "info", "--concurrency", "100", "-Ofair", "--hostname=evt1@%%h"]
+ENTRYPOINT ["celery", "-A", "nada.celery.celery:app", "worker", "--pool",  "gevent", "-l", "info", "--concurrency", "100", "-Ofair", "--hostname=evt1@%%h"]
