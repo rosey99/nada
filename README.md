@@ -15,53 +15,84 @@ Basically a test harness at this point, built to test the proposition that the a
 - **AI Agent Orchestration**: Built-in support for Pydantic AI and FastAPI integration
 - **Distributed Task Processing**: Celery-based async task queue with Redis support
 - **FastAPI Integration**: Seamless API interaction with AI agents
-- **Multiple LLM Providers**: Support for local Llama models, OpenRouter, and more
-- **Tool Integration**: Web search, file system access, shell execution
+- **Multiple LLM Providers**: Support for local Llama models (via OpenAI-compatible APIs), OpenRouter, and more
+- **Tool Integration**: Web search, file system access, shell execution, task planning, Telegram notifications
 - **Model Management**: Dynamic model loading/unloading with provider support
-- **Chat Interface**: Built-in web UI for agent interaction
+- **Chat Interface**: Built-in web UI for agent interaction (agent-generated and original)
+- **Redis Integration**: Redis-backed session management, caching, and Lua script support
+- **MCP Support**: Model Context Protocol server configuration for external tool access
+- **API Discovery**: Automatic FastAPI route discovery and documentation for agent context
 
 ## 🏗️ Project Structure
 
 ```
 nada/
 ├── __init__.py              # Package initialization
+├── main.py                  # FastAPI application entry point
+├── deps.py                  # Dependency injection (Redis, Agent, Providers)
+├── models.py                # Pydantic model definitions
+├── settings.py              # Application settings (env-based)
+├── simple_agent.py          # Standalone interactive agent example
+├── celery/                  # Celery task integration
+│   ├── __init__.py
+│   ├── celery.py            # Celery app configuration
+│   └── tasks.py             # Task definitions
 ├── fastapi_agent/           # FastAPI agent integration
 │   ├── __init__.py
 │   ├── fastapi_agent.py     # Main FastAPI agent class
-│   ├── fastapi_app.py       # FastAPI application setup
 │   ├── fastapi_auth.py      # Authentication middleware
 │   ├── fastapi_discovery.py # API route discovery
-│   └── agents/
-│       ├── __init__.py
-│       ├── base_agent.py    # Base agent class
-│       └── pydantic_ai.py   # Pydantic AI agent implementation
+│   ├── agents/
+│   │   ├── __init__.py
+│   │   ├── base_agent.py    # Base agent class (ABC)
+│   │   └── pydantic_ai.py   # Pydantic AI agent implementation
+│   └── chat_ui/             # Web chat interface
+│       ├── index.html
+│       ├── chat.js
+│       ├── script.js
+│       ├── styles.css
+│       ├── new_style.css
+│       └── templates/
+│           └── index.html
 ├── llm/                     # LLM integration
 │   ├── __init__.py
 │   ├── common/
 │   │   ├── __init__.py
 │   │   └── provider.py      # LLM provider abstraction
-│   ├── locals.py            # Local Llama models
+│   ├── openai_compat.py     # OpenAI-compatible (Llama.cpp, Ollama) providers
 │   └── openrouter.py        # OpenRouter integration
-├── nada_celery/             # Celery task integration
+├── redis/                   # Redis client configuration
 │   ├── __init__.py
-│   ├── celery.py            # Celery app configuration
-│   └── tasks.py             # Task definitions
-├── redis.py                 # Redis client configuration
-├── settings.py              # Application settings
-├── models.py                # Model definitions
-├── simple_agent.py          # Standalone agent example
+│   ├── client/
+│   │   ├── __init__.py
+│   │   ├── redis_cache.py   # Redis cache client
+│   │   └── redis_data.py    # Redis data client
+│   ├── load_lua_funcs.py    # Lua function loader
+│   └── lua/
+│       └── kv.lua           # Key-value Lua scripts
+├── routes/                  # API route definitions
+│   ├── __init__.py
+│   ├── agent/
+│   │   ├── __init__.py
+│   │   └── agent_routes.py  # Agent chat and query endpoints
+│   └── api/
+│       ├── __init__.py
+│       └── v1/
+│           ├── __init__.py
+│           └── api_routes.py # API v1 endpoints
 └── tools/                   # Tool implementations
     ├── __init__.py
-    └── planner.py           # Task planning tools
+    ├── planner.py           # Task planning tools
+    └── telegram.py          # Telegram notification tool
 ```
 
 ## 🛠️ Requirements
 
 - Python 3.11+
-- Redis (for Celery and caching)
+- Redis (for Celery, caching, and session management)
 - FastAPI 0.139.0+
 - Celery 5.6.3+
-- Pydantic AI 2.9.0+
+- Pydantic AI 2.9.0+ (pydantic-ai-slim with openai, openrouter, duckduckgo, web-fetch, mcp extras)
 - Gevent 26.5.0+
 
 ### Development Dependencies
@@ -82,7 +113,7 @@ pip install -e .
 ```
 
 ### Development Setup
-If there were any actual tests (there are not), like so:
+
 ```bash
 pip install -e ".[dev]"
 ```
@@ -112,6 +143,54 @@ REDIS_CACHE_DBNUM=1
 REDIS_DATA_HOST=localhost
 REDIS_DATA_PORT=6379
 REDIS_DATA_DBNUM=2
+
+# LLM Provider Configuration
+PROVIDER_CONFIG_PATH=providers.json
+PROVIDER_DEFAULT=
+PROVIDER_MODEL_DEFAULT=
+
+# OpenRouter API Key (optional)
+OPENROUTER_API_KEY=
+
+# Telegram Notifications (optional)
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_CHAT_ID=
+
+# SMTP Configuration (optional)
+SMTP_HOST=
+SMTP_USER=
+SMTP_PASSWORD=
+EMAILS_FROM_EMAIL=
+SMTP_TLS=true
+SMTP_SSL=false
+SMTP_PORT=587
+```
+
+Additionally, create a `providers.json` file (path configured via `PROVIDER_CONFIG_PATH`) with LLM provider definitions:
+
+```json
+[
+  {
+    "name": "local_llama",
+    "status": "unknown",
+    "is_active": false,
+    "prompt_url": "http://localhost:8080/v1",
+    "models_url": "http://localhost:8080/v1/models",
+    "api_key": "NOT_A_REAL_KEY",
+    "get_available_models": "nada.llm.openai_compat:get_available_llama_models",
+    "get_model": "nada.llm.openai_compat:get_llama_model"
+  },
+  {
+    "name": "openrouter",
+    "status": "unknown",
+    "is_active": false,
+    "prompt_url": "https://openrouter.ai/api/v1",
+    "models_url": "https://openrouter.ai/api/v1/models",
+    "api_key": "OPENROUTER_API_KEY",
+    "get_available_models": "nada.llm.openrouter:get_available_openrouter_models",
+    "get_model": "nada.llm.openrouter:get_openrouter_model"
+  }
+]
 ```
 
 ## 🎯 Usage
@@ -123,36 +202,52 @@ python -m nada.simple_agent
 ```
 
 This starts an interactive agent session with:
-- Local Llama models (if available)
-- Web search capabilities
+- Configured LLM providers (local models or OpenRouter)
+- Web search capabilities (DuckDuckGo, web fetch)
 - File system access
 - Shell execution
+- MCP server support (e.g., LangChain docs)
 
 ### Running with FastAPI
-Install a python venv with the project dependencies and update LLM provider configuration (currently in simpleagent.py, and .env). Then:
+
+Install a python venv with the project dependencies and update LLM provider configuration (in `providers.json` and `.env`). Then:
 
 ```bash
-python nada/fastapi_agent/fastapi_app.py
-
+uvicorn nada.main:app --host 0.0.0.0 --port 8000
 ```
 
-Access the chat interface at: `http://localhost:8000/agent/chat` 
-Or the alternative, very shiny agent generated frontend at: `http://localhost:8000/chat` 
+Or using the Docker Compose setup:
+
+```bash
+docker compose -f container-compose.yml up
+```
+
+Access the chat interface at: `http://localhost:8000/agent/v1/chat`
 
 ## 🌐 API Endpoints
 
 The FastAPI agent provides the following endpoints:
 
-- `POST /agent/query` - Ask the AI agent about API endpoints
-- `GET /agent/chat` - Web chat interface
-- `POST /agent/models_update` - Update the model provider
-- `GET /chat` - Agent generated web chat interface, the results of the first coding test.
+### Agent Routes (`/agent/v1`)
+
+- `GET /agent/v1/chat` - Web chat interface (HTML)
+- `POST /agent/v1/query` - Ask the AI agent about API endpoints (accepts query, history, and optional files)
+- `POST /agent/v1/models_update` - Update the active model provider and model selection
+
+### API Routes (`/api/v1`)
+
+- `GET /api/v1/` - Welcome/root endpoint
+- `GET /api/v1/providers` - Retrieve model providers and models as JSON
 
 ## 🧪 Testing
-If only. No tests at this time. This code is very fresh! 
+
 ```bash
 pytest -v --cov=nada
 ```
+
+Tests are organized in:
+- `tests/unit/` - Unit tests
+- `tests/integration/` - Integration tests (e.g., Redis KV store tests)
 
 ## 📝 Development
 
@@ -179,9 +274,10 @@ pre-commit install
 
 ### Common Issues
 
-1. **Model not loading**: Check that your local Llama server is running on the specified port
-2. **Redis connection errors**: Verify Redis is running and accessible
-3. **Permission errors**: Ensure proper permissions on the data directory
+1. **Model not loading**: Check that your local Llama server is running on the specified port and accessible via OpenAI-compatible API
+2. **Redis connection errors**: Verify Redis is running and accessible on the configured host/port
+3. **Provider not found**: Ensure `providers.json` exists at the path specified by `PROVIDER_CONFIG_PATH` and contains valid provider definitions
+4. **Permission errors**: Ensure proper permissions on the data directory and SSH keys directory (`/nada/.ssh`)
 
 ### Debug Mode
 
