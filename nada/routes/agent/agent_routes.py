@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 agent_router = APIRouter(prefix="/agent/v1", tags=["agent"])
 
 
-@agent_router.get("/chat", response_class=HTMLResponse, tags=["chat"])
+@agent_router.get("/chat", response_class=HTMLResponse)
 async def chat_page(request: Request):
     """
     Main chat page.
