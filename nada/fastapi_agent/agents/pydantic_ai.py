@@ -2,6 +2,7 @@ import logging
 from typing import List, Optional
 
 from pydantic_ai import Agent
+from pydantic_ai.usage import UsageLimits
 from pydantic_ai.models import Model, ModelSettings
 
 from .base_agent import BaseAgent
@@ -41,7 +42,6 @@ class PydanticAIAgent(BaseAgent):
         self.logger.info(f"initialzing agent with {self.model if isinstance(self.model, str) else self.model.__class__}")
         tools = kwargs.get('tools') or []
         capabilities = kwargs.get('capabilities') or []
-        settings = ModelSettings(timeout=0)
         return Agent(
             model=self.model,
             system_prompt=self.prompt,
@@ -82,7 +82,7 @@ class PydanticAIAgent(BaseAgent):
             else:
                 enhanced_message = message
 
-            result = await self.agent.run(enhanced_message)
+            result = await self.agent.run(enhanced_message, usage_limits = UsageLimits(request_limit=100))
             response_text = result.output
             response_usage = result.usage
 
