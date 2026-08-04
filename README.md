@@ -3,24 +3,23 @@
 A distributed async agent orchestration system built with Docker, Python, FastAPI, Pydantic AI, and Celery. Essentially a research project, and absolutely not ready for prime time. Here nonetheless as it might be helpful to others who are interested in evaluating (in particular) open source LLMs, agent frameworks, and LLM orchestration/performance. At the moment, only OpenAI compatible (Llama.cpp, Ollama, etc.) providers, along with Openrouter are supported.
 
 ## 🚀 Overview
-Essentially a fork (with gratitude!) of https://github.com/blairhudson/fastapi-agents, repurposed as an agent and LLM orchestration tool. More capabilities (soon) with truly async execution, multi-step planning, Redis for cache, memory, and semantic search, as well as comprehensive LLM/agent metrics. Built to provide a sufficiently powerful agent that is not confined to either a console or an IDE, and that can offload long-running workloads to an lightweight async worker pool.    
+Essentially a fork (with gratitude!) of https://github.com/blairhudson/fastapi-agents, repurposed as an agent and LLM orchestration tool. Built to provide a sufficiently powerful agent that is not confined to either a console or an IDE, and that can offload long-running workloads to an lightweight async worker pool. More capabilities are coming (soon) with truly async execution, multi-step planning, Redis for cache, memory, and semantic search, as well as comprehensive LLM/agent metrics.    
 
 Nada is a framework for building and managing AI agents that can interact with FastAPI applications and perform various tasks including web search, file system operations, and API calls (so far), using the Pydantic AI capabilities system. 
 
-Basically a test harness at this point, built to test the proposition that the app could then be used to generate usable frontend code for itself. And to benchmark results and performance for various (small-ish) open source models, for actual day-to-day development work. Certain pieces, including this document, are the work of Qwen3.5 4B running on an old laptop. Totally sufficient for many tasks and agent tools, IMHO.
+Basically a test harness at this point, built to test the proposition that the app could then be used to generate usable code for itself. And to benchmark results and performance for various (small-ish) open source models, for actual day-to-day development work. Certain pieces, including this document, are the work of Qwen3.5 4B running on an old laptop. Totally sufficient for many tasks and agent tools, IMHO.
 
 
 ## 📋 Features
 
 - **AI Agent Orchestration**: Built-in support for Pydantic AI and FastAPI integration
-- **Distributed Task Processing**: Celery-based async task queue with Redis support
+- **Distributed Task Processing**: Celery-based async task queue with Redis support (roadmap)
 - **FastAPI Integration**: Seamless API interaction with AI agents
 - **Multiple LLM Providers**: Support for local Llama models (via OpenAI-compatible APIs), OpenRouter, and more
 - **Tool Integration**: Web search, file system access, shell execution, task planning, Telegram notifications
 - **Model Management**: Dynamic model loading/unloading with provider support
 - **Chat Interface**: Built-in web UI for agent interaction (agent-generated and original)
 - **Redis Integration**: Redis-backed session management, caching, and Lua script support
-- **MCP Support**: Model Context Protocol server configuration for external tool access
 - **API Discovery**: Automatic FastAPI route discovery and documentation for agent context
 
 ## 🏗️ Project Structure
@@ -82,8 +81,8 @@ nada/
 │           └── api_routes.py # API v1 endpoints
 └── tools/                   # Tool implementations
     ├── __init__.py
-    ├── planner.py           # Task planning tools
-    └── telegram.py          # Telegram notification tool
+    ├── planner.py           # Task planning tools (roadmap)
+    └── telegram.py          # Telegram notification tool (roadmap)
 ```
 
 ## 🛠️ Requirements
@@ -116,13 +115,6 @@ pip install -e .
 
 ```bash
 pip install -e ".[dev]"
-```
-
-### Docker
-
-```bash
-docker build -t nada .
-docker run -p 8000:8000 nada
 ```
 
 ## 🔧 Configuration
@@ -172,10 +164,9 @@ Additionally, create a `providers.json` file (path configured via `PROVIDER_CONF
 [
   {
     "name": "local_llama",
-    "status": "unknown",
-    "is_active": false,
     "prompt_url": "http://localhost:8080/v1",
-    "models_url": "http://localhost:8080/v1/models",
+    "models_url": "http://localhost:8080/models",
+    "load_url": "http://localhost:8080/load",
     "api_key": "NOT_A_REAL_KEY",
     "get_available_models": "nada.llm.openai_compat:get_available_llama_models",
     "get_model": "nada.llm.openai_compat:get_llama_model"
@@ -185,7 +176,8 @@ Additionally, create a `providers.json` file (path configured via `PROVIDER_CONF
     "status": "unknown",
     "is_active": false,
     "prompt_url": "https://openrouter.ai/api/v1",
-    "models_url": "https://openrouter.ai/api/v1/models",
+    "models_url": "",
+    "load_url": "",
     "api_key": "OPENROUTER_API_KEY",
     "get_available_models": "nada.llm.openrouter:get_available_openrouter_models",
     "get_model": "nada.llm.openrouter:get_openrouter_model"
@@ -206,7 +198,6 @@ This starts an interactive agent session with:
 - Web search capabilities (DuckDuckGo, web fetch)
 - File system access
 - Shell execution
-- MCP server support (e.g., LangChain docs)
 
 ### Running with FastAPI
 
@@ -219,7 +210,7 @@ uvicorn nada.main:app --host 0.0.0.0 --port 8000
 Or using the Docker Compose setup:
 
 ```bash
-docker compose -f container-compose.yml up
+docker-compose -f container-compose.yml up
 ```
 
 Access the chat interface at: `http://localhost:8000/agent/v1/chat`
