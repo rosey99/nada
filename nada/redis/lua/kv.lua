@@ -1,16 +1,5 @@
 #!lua name=nada_kv
 
-local function splits(s, delim)
-    local i = 1
-    return function()
-        if i > 3 then return nil end
-        local pattern = "([^" .. delim .. "]*)"
-        local part = s:match(pattern, i)
-        i = s:find(delim, i) and s:find(delim, i) + 1 or #s + 1
-        return part
-    end
-end
-
 local function set_keys(keys, args)
     -- Loop through keys and args
     local all_keys_and_values = {}
