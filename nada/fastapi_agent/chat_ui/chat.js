@@ -13,10 +13,12 @@ class ChatApp {
 
     // DOM elements
     this.providerData = null;
+    this.providersContent = document.getElementById("providersContent");
     this.providerSelector = document.getElementById("providersSelect");
     this.modelSelector = document.getElementById("modelSelect");
     this.metricsContainer = document.getElementById("queryMetrics");
     this.providersList = document.getElementById("providersList");
+    this.providerContent = document.getElementById("providersContent");
     this.outputSpan = document.getElementById("outputSpan");
     this.inputSpan = document.getElementById("inputSpan");
     this.messagesContainer = document.getElementById("chatMessages");
@@ -122,24 +124,9 @@ class ChatApp {
     }
   }
 
-  async getProviders() {
-    try {
-      const response = await fetch("/providers", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      console.log("Adding providers");
-      this.addProviderList(await response.text());
-    } catch (error) {
-      this.addErrorMessage("Sorry, I encountered an error: " + error.message);
-    }
-  }
-
   async getProvidersJSON() {
     try {
-      const response = await fetch("/providers_json", {
+      const response = await fetch("/api/v1/providers", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -149,6 +136,7 @@ class ChatApp {
       let provObj = await response.json();
       this.providerData = provObj;
       this.addProvidersOptions(provObj);
+      this.addProviderList(provObj);
     } catch (error) {
       this.addErrorMessage("Sorry, I encountered an error: " + error.message);
     }
@@ -170,7 +158,7 @@ class ChatApp {
 
     if (this.modelSelector.value) {
       try {
-        const response = await fetch("/agent/models_update", {
+        const response = await fetch("/agent/v1/models_update", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -283,15 +271,22 @@ class ChatApp {
     this.metricsContainer.innerHTML = content;
   }
 
-  addProviderList(content) {
-    const providerDiv = document.createElement("div");
-    providerDiv.className = "status-message";
+  addProviderList(provObj) {
+    const providerDiv = this.providersContent;
+    var content = "";
+    for (var i = 0; i < provObj.length; i++) {
+      console.log("Found provider J: " + provObj[i].name + " - " + i);
+      let spanColor = "blue";
+      if (provObj[i].status === "OFFLINE") {
+        spanColor = "red";
+      }
+      content += `<p>${provObj[i].name} is <span style="color: ${spanColor};">${provObj[i].status}</span> with ${provObj[i].models.length} models</p>`;
+    }
     providerDiv.innerHTML = content;
-    this.providersList.appendChild(providerDiv);
   }
 
   async callAgentAPI(message) {
-    const response = await fetch("/agent/query", {
+    const response = await fetch("/agent/v1/query", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -303,7 +298,13 @@ class ChatApp {
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      //throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      this.addErrorMessage(
+        "Sorry, I encountered an error: " +
+          response.status +
+          " -> " +
+          response.statusText,
+      );
     }
 
     return await response.json();
@@ -405,6 +406,5 @@ class ChatApp {
 // Initialize the chat app when the page loads
 document.addEventListener("DOMContentLoaded", () => {
   const app = new ChatApp();
-  app.getProviders();
   app.getProvidersJSON();
 });

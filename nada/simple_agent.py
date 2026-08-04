@@ -14,46 +14,11 @@ from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
 
 from pydantic_ai_harness import Shell, FileSystem
 
-from nada.llm.locals import get_available_llama_models, get_llama_model
-from nada.llm.common.provider import ProviderCollection
-from nada.llm.openrouter import get_openrouter_model, get_available_openrouter_models
-#from nada.models import ModelProvider
-from nada.settings import settings
+from nada.settings import providers
 
 # TODO move this inside settings or out to compose
 # just to support corner-case where container host
 # is also running an LLM server, llama.cpp, Ollama, etc.
-
-LOCAL_PROVIDERS = [
-    {'name': "Local Llama LTV",
-     'prompt_url': "http://192.168.1.39:8080/v1",
-     'models_url': "http://192.168.1.39:8080/models",
-     'load_url': "http://192.168.1.39:8080/load",
-     'support_autoload': True,
-     'get_available_models': get_available_llama_models,
-     'get_model': get_llama_model,
-     'models_api_timeout': 5,
-     },
-     {'name': "Local Llama BSlow",
-      'prompt_url': settings.HOST_LLM_SERVER + "/v1",
-      'models_url': settings.HOST_LLM_SERVER + "/models",
-      'load_url': settings.HOST_LLM_SERVER + "load",
-      'support_autoload': True,
-      'get_available_models': get_available_llama_models,
-      'get_model': get_llama_model,
-      'models_api_timeout': 5,
-      },
-      {'name': "Openrouter",
-       'prompt_url': "https://openrouter.ai/api/v1",
-       'models_url': "",
-       'load_url': "",
-       'support_autoload': True,
-       'get_available_models': get_available_openrouter_models,
-       'get_model': get_openrouter_model,
-       'models_api_timeout': 5,
-       'api_key': settings.OPENROUTER_API_KEY,
-       },
-]
 
 # setup logging
 logger = logging.getLogger(__name__)
@@ -95,7 +60,7 @@ async def interactive_shell(prompt_str: str):
 def main() -> None:
 #     """Setup and run the interactive agent loop."""
     # Get providers, start with local
-    providers = ProviderCollection(provider_list=LOCAL_PROVIDERS)
+    #providers = settings.providers
 
     # modifies in place and returns
     providers.refresh_provider()
@@ -105,16 +70,13 @@ def main() -> None:
     for model in provider.models:
         # get the loaded model
         if model.model_status == 'loaded':
-            use_model = get_llama_model(model_id=model.id, provider=provider)
+            use_model = provider.get_model(model.id, provider)
             #print('Found loaded model: ', model.id, model.model_status)
             #print(f'Context: {model.context_size}')
     if not use_model:
         use_model = providers.get_model_obj(model_id='unsloth/Qwen3.5-4B-MTP-GGUF:Q8_0', provider_name=provider.name)
 
     model = use_model
-
-    #t = tool_from_langchain(ShellTool())
-    #t.description = "Execute one or more bash commands as a list of strings."
 
     agent = Agent(
         model,

@@ -1,18 +1,43 @@
 from pydantic import BaseModel, ConfigDict, Field, ImportString, model_validator
-from typing import Dict, Optional, List, Set
+from typing import Dict, Optional, List, Set, Any
 from typing_extensions import Self
 
-class AIRequest(BaseModel):
-    message: str = Field(
-        ..., description="The user message to send to the AI", min_length=1
-    )
-    instructions: Optional[str] = Field(
-        default=None, description="Optional instructions to guide the AI's behavior"
-    )
+from fastapi import UploadFile
 
-class AIResponse(BaseModel):
-    response: str = Field(..., description="The AI's response")
-    model: str = Field(..., description="The model used to generate the response")
+from pydantic_ai import RunContext, RunUsage
+
+class APIResponse(BaseModel):
+    """Model for API response data"""
+
+    status_code: int
+    data: Any
+    headers: Dict[str, str]
+    error: Optional[str] = None
+
+
+class AgentQuery(BaseModel):
+    """Request model for agent queries"""
+
+    query: str
+    history: Optional[list] = None
+    files: Optional[List[UploadFile]] = None
+
+
+class AgentResponse(BaseModel):
+    """Response model for agent queries"""
+
+    query: str
+    response: str
+    status: str = "success"
+    error: Optional[str] = None
+    history: Optional[list] = None
+    usage: Optional[RunUsage] = None
+
+class ModelQuery(BaseModel):
+    """Request model for model choice update"""
+
+    provider_name: str
+    model_id: str
 
 
 class LlamaArgs(BaseModel):

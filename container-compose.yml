@@ -26,8 +26,10 @@ services:
       #CELERY_BROKER_URI: ${CELERY_BROKER_URI}
       #CELERY_RESULT_URI: ${CELERY_RESULT_URI}
       APP_DB_CONNECTION_URI: ${APP_DB_CONNECTION_URI}
+      PROVIDER_CONFIG_PATH: providers.json
+      PROVIDER_DEFAULT: ${PROVIDER_DEFAULT}
+      PROVIDER_MODEL_DEFAULT: ${PROVIDER_MODEL_DEFAULT}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
-      HOST_LLM_SERVER: host.containers.internal:8080
       GH_TOKEN: ${GH_TOKEN}
 
   fastapi_agent:
@@ -42,11 +44,11 @@ services:
       HOME: /home/default
       #REDIS_DATA_HOST: ${REDIS_DATA_HOST}
       REDIS_DATA_HOST: redis-db
-      REDIS_DATA_PORT: ${REDIS_DATA_PORT}
+      REDIS_DATA_PORT: 6389
       REDIS_DATA_DBNUM: ${REDIS_DATA_DBNUM}
       #REDIS_CACHE_HOST: ${REDIS_CACHE_HOST}
       REDIS_CACHE_HOST: redis-db
-      REDIS_CACHE_PORT: ${REDIS_CACHE_PORT}
+      REDIS_CACHE_PORT: 6389
       REDIS_CACHE_DBNUM: ${REDIS_CACHE_DBNUM}
       DB_CONNECTION_URI: ${DB_CONNECTION_URI}
       CELERY_BROKER_URI: redis://redis-db:6389/2
@@ -54,13 +56,19 @@ services:
       #CELERY_BROKER_URI: ${CELERY_BROKER_URI}
       #CELERY_RESULT_URI: ${CELERY_RESULT_URI}
       APP_DB_CONNECTION_URI: ${APP_DB_CONNECTION_URI}
+      PROVIDER_CONFIG_PATH: providers.json
+      PROVIDER_DEFAULT: ${PROVIDER_DEFAULT}
+      PROVIDER_MODEL_DEFAULT: ${PROVIDER_MODEL_DEFAULT}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
-      HOST_LLM_SERVER: http://host.containers.internal:8080
       GH_TOKEN: ${GH_TOKEN}
 
     entrypoint:
-      - python
-      - nada/fastapi_agent/fastapi_app.py
+      - uvicorn
+      - nada.main:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
     ports:
       - "8000:8000"
 

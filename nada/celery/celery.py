@@ -22,7 +22,7 @@ app = Celery('nada',
             broker= broker_uri,
             backend=  backend_uri,
             include=[
-                'nada.nada_celery.tasks',
+                'nada.celery.tasks',
                 ]
             )
 

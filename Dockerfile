@@ -53,7 +53,7 @@ RUN mkdir -p /root/.ssh && ssh-keyscan github.com >> /root/.ssh/known_hosts
 
 # create app directory and add application deps
 WORKDIR /home/
-COPY pyproject.toml requirements.txt ./
+COPY pyproject.toml requirements.txt $PROVIDER_CONFIG_PATH ./
 
 # Copy the app layers separately to speed build
 #RUN --mount=type=ssh pip install .
@@ -69,4 +69,4 @@ RUN apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false
     && rm -rf /var/lib/apt/lists/*
 
 # start celery
-ENTRYPOINT ["celery", "-A", "nada.nada_celery.celery:app", "worker", "--pool",  "gevent", "-l", "info", "--concurrency", "100", "-Ofair", "--hostname=evt1@%%h"]
+ENTRYPOINT ["celery", "-A", "nada.celery.celery:app", "worker", "--pool",  "gevent", "-l", "info", "--concurrency", "100", "-Ofair", "--hostname=evt1@%%h"]

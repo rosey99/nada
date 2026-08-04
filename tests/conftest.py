@@ -4,7 +4,8 @@ import sys
 from pathlib import Path
 
 import pytest
-import redis
+#import redis
+import redis.asyncio as redis
 
 from nada.redis.client.redis_data import KVBase
 from nada.redis.load_lua_funcs import load_funcs
@@ -18,7 +19,7 @@ settings = Settings(REDIS_DATA_DBNUM=15)
 load_funcs() # do this once per test run
 
 @pytest.fixture
-def redis_client():
+async def redis_client():
     """Redis client fixture for integration tests using test database from ."""
     client = redis.Redis(
         host=settings.REDIS_DATA_HOST,
@@ -26,10 +27,10 @@ def redis_client():
         db=settings.REDIS_DATA_DBNUM,
     )
     # always start with a clean db
-    client.flushdb()
+    await client.flushdb()
     yield client
-    client.flushdb()
-    client.close()
+    await client.flushdb()
+    await client.aclose()
 
 @pytest.fixture
 def kvstore(redis_client: redis_client):
