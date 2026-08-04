@@ -90,15 +90,10 @@ class ModelProvider(BaseModel):
     prompt_url: str = Field(description="Base URL")
     models_api_timeout: Optional[int] = Field(description="Timeout in seconds for API calls, not including chat.", default=0)
     models_url: Optional[str] | None = Field(description="Models and model status URL.")
+    # load_url is here to facilitate explicitly measuring model load times, future use.
     load_url: Optional[str] | None = Field(description="Manual model loading URL")
     api_key: str = Field(description="Optional API key, required for most clients even local", default='NOT_A_REAL_KEY')
     support_autoload: Optional[bool] = Field(description="Manual model loading URL", default=True)
     models: List[LlamaModelData] = Field(description="Hosted LLMs", default_factory=list)
     get_available_models: ImportString
     get_model: ImportString
-
-class KVStore(BaseModel):
-    """
-
-    """
-    name: str = Field(description="KV store name")
