@@ -16,13 +16,17 @@ services:
       REDIS_DATA_HOST: redis-db
       REDIS_DATA_PORT: 6389
       REDIS_DATA_DBNUM: ${REDIS_DATA_DBNUM}
+      REDIS_DATA_USER: ${REDIS_DATA_USER}
+      REDIS_DATA_PASSWORD: ${REDIS_DATA_PASSWORD}
       #REDIS_CACHE_HOST: ${REDIS_CACHE_HOST}
       REDIS_CACHE_HOST: redis-db
       REDIS_CACHE_PORT: 6389
       REDIS_CACHE_DBNUM: ${REDIS_CACHE_DBNUM}
+      REDIS_CACHE_USER: ${REDIS_CACHE_USER}
+      REDIS_CACHE_PASSWORD: ${REDIS_CACHE_PASSWORD}
       DB_CONNECTION_URI: ${DB_CONNECTION_URI}
-      CELERY_BROKER_URI: redis://redis-db:6389/2
-      CELERY_RESULT_URI: redis://redis-db:6389/3
+      CELERY_BROKER_URI: redis://${CELERY_REDIS_USER}:${CELERY_REDIS_PASSWORD}@redis-db:6389/2
+      CELERY_RESULT_URI: redis://${CELERY_REDIS_USER}:${CELERY_REDIS_PASSWORD}@redis-db:6389/3
       #CELERY_BROKER_URI: ${CELERY_BROKER_URI}
       #CELERY_RESULT_URI: ${CELERY_RESULT_URI}
       APP_DB_CONNECTION_URI: ${APP_DB_CONNECTION_URI}
@@ -46,13 +50,17 @@ services:
       REDIS_DATA_HOST: redis-db
       REDIS_DATA_PORT: 6389
       REDIS_DATA_DBNUM: ${REDIS_DATA_DBNUM}
+      REDIS_DATA_USER: ${REDIS_DATA_USER}
+      REDIS_DATA_PASSWORD: ${REDIS_DATA_PASSWORD}
       #REDIS_CACHE_HOST: ${REDIS_CACHE_HOST}
       REDIS_CACHE_HOST: redis-db
       REDIS_CACHE_PORT: 6389
       REDIS_CACHE_DBNUM: ${REDIS_CACHE_DBNUM}
+      REDIS_CACHE_USER: ${REDIS_CACHE_USER}
+      REDIS_CACHE_PASSWORD: ${REDIS_CACHE_PASSWORD}
       DB_CONNECTION_URI: ${DB_CONNECTION_URI}
-      CELERY_BROKER_URI: redis://redis-db:6389/2
-      CELERY_RESULT_URI: redis://redis-db:6389/3
+      CELERY_BROKER_URI: redis://${REDIS_BROKER_USER}:${REDIS_BROKER_PASSWORD}@redis-db:6389/2
+      CELERY_RESULT_URI: redis://${REDIS_RESULT_USER}:${REDIS_RESULT_PASSWORD}@redis-db:6389/3
       #CELERY_BROKER_URI: ${CELERY_BROKER_URI}
       #CELERY_RESULT_URI: ${CELERY_RESULT_URI}
       APP_DB_CONNECTION_URI: ${APP_DB_CONNECTION_URI}
@@ -74,8 +82,10 @@ services:
 
   redis-db:
     image: docker.io/redis:latest
-    command: --port 6389 --appendonly yes
+    command: redis-server /usr/local/etc/redis/redis.conf
     volumes:
+      - ./redis-config/redis.conf:/usr/local/etc/redis/redis.conf
+      - ./redis-config/users.acl:/etc/redis/users.acl
       - ${REDIS_PERSIST_DIR}:/data:Z
     ports:
       - "6389:6389"

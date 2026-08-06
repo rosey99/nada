@@ -1,0 +1,4 @@
+user nada_data on >changethis123 ~* &* +@read +@write >@4
+user nada_cache on >changethis123 ~* &* +@read +@write >@8
+user nada_broker on >changethis123 ~* &* +@read +@write >@2
+user nada_result on >changethis123 ~* &* +@read +@write >@3
