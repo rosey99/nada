@@ -145,12 +145,14 @@ class ChatApp {
   async updateModel(elem) {
     if (elem === this.providerSelector) {
       console.log("Provider changed");
-      let provName = this.providerSelector.value;
-      for (var i = 0; i < this.providerData.length; i++) {
-        if (this.providerData[i].name != provName) {
-          this.providerData[i].is_active = false;
+      let provID = this.providerSelector.value;
+      for (let provKey in this.providerData) {
+        if (provKey != provID) {
+          this.providerData[provKey].is_active = false;
+          console.log("NOT provider key: " + provID + " " + provKey);
         } else {
-          this.providerData[i].is_active = true;
+          this.providerData[provKey].is_active = true;
+          console.log("provider key: " + provID + " " + provKey);
         }
       }
       this.addProvidersOptions(this.providerData);
@@ -186,11 +188,11 @@ class ChatApp {
       });
     }
 
-    for (var i = 0; i < providers_obj.length; i++) {
+    for (let prov_key in providers_obj) {
       const providerOpt = document.createElement("option");
-      providerOpt.text = providers_obj[i].name;
-      providerOpt.value = providers_obj[i].name;
-      if (providers_obj[i].is_active) {
+      providerOpt.text = providers_obj[prov_key].name;
+      providerOpt.value = prov_key;
+      if (providers_obj[prov_key].is_active) {
         providerOpt.selected = true;
       }
       this.providerSelector.add(providerOpt);
@@ -206,19 +208,20 @@ class ChatApp {
         var is_selected = [];
         var is_loaded = [];
 
-        for (var n = 0; n < providers_obj[i].models.length; n++) {
+        for (let mod_key in providers_obj[prov_key].models) {
           const modelOpt = document.createElement("option");
-
           modelOpt.text = this.truncateToLength(
-            providers_obj[i].models[n].id,
+            providers_obj[prov_key].models[mod_key].id,
             45,
           );
-          modelOpt.value = providers_obj[i].models[n].id;
+          modelOpt.value = mod_key;
 
-          if (providers_obj[i].models[n].selected) {
+          if (providers_obj[prov_key].models[mod_key].selected) {
             is_selected.push(modelOpt);
           }
-          if (providers_obj[i].models[n].model_status === "loaded") {
+          if (
+            providers_obj[prov_key].models[mod_key].model_status === "loaded"
+          ) {
             is_loaded.push(modelOpt);
           }
           this.modelSelector.add(modelOpt);
@@ -240,13 +243,18 @@ class ChatApp {
         }
 
         // Update input/output spans
-        for (var ii = 0; ii < providers_obj[i].models.length; ii++) {
-          if (providers_obj[i].models[ii].id === this.modelSelector.value) {
+        for (let mod_key in providers_obj[prov_key].models) {
+          if (
+            providers_obj[prov_key].models[mod_key].id ===
+            this.modelSelector.value
+          ) {
             let inputs = Array.from(
-              providers_obj[i].models[ii].architecture.input_modalities,
+              providers_obj[prov_key].models[mod_key].architecture
+                .input_modalities,
             );
             let outputs = Array.from(
-              providers_obj[i].models[ii].architecture.output_modalities,
+              providers_obj[prov_key].models[mod_key].architecture
+                .output_modalities,
             );
             this.inputSpan.innerHTML = inputs.join(", ");
             this.outputSpan.innerHTML = outputs.join(", ");

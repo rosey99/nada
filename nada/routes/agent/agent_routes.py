@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse
@@ -57,7 +57,7 @@ async def query_ai_agent(request: AgentQuery, agent: FastapiAgentDep, session: S
         )
 
 
-@agent_router.post("/models_update", response_model=List[ModelProvider])
+@agent_router.post("/models_update", response_model=Dict[str, ModelProvider])
 async def update_model(model_qry: ModelQuery, providers: ProvidersDep, agent: FastapiAgentDep):
     # TODO this is a mess, needs a refactor as import here breaks design
     #  need access to agent in update model endpoint, and that is a problem
@@ -66,7 +66,7 @@ async def update_model(model_qry: ModelQuery, providers: ProvidersDep, agent: Fa
     model = None
     logger.info(f"Update provider -> {provider.name} with {len(provider.models)} models")
     provider.get_available_models(provider)
-    for m in provider.models:
+    for m in provider.models.values():
         if m.id == model_qry.model_id:
             model = m
     if not model:
@@ -81,10 +81,10 @@ async def update_model(model_qry: ModelQuery, providers: ProvidersDep, agent: Fa
                 v.is_active = False
         else:
             v.is_active = True
-            for model in v.models:
-                if model.id != model_qry.model_id and model.model_status == 'loaded':
+            for mod_id, model in v.models.items():
+                if mod_id != model_qry.model_id and model.model_status == 'loaded':
                     model.model_status = 'unloaded'
-                if model.id == model_qry.model_id:
+                if mod_id == model_qry.model_id:
                     model.model_status = 'loaded'
                     model.selected = True
-    return list(providers.providers.values())
+    return providers.providers

@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict
 
 from fastapi import APIRouter, Request
 
@@ -14,11 +14,11 @@ async def root():
     return {"message": "Welcome to My Business API"}
 
 
-@api_router.get("/providers", response_model=List[ModelProvider], tags=["providers"])
+@api_router.get("/providers", response_model=Dict[str, ModelProvider], tags=["providers"])
 async def json_model_providers(request: Request, providers: ProvidersDep):
     """
     Retrieve model providers and models as JSON.
 
     """
     # leaving request here for now, auth to follow
-    return list(providers.providers.values())
+    return providers.providers

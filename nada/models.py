@@ -94,6 +94,6 @@ class ModelProvider(BaseModel):
     load_url: Optional[str] | None = Field(description="Manual model loading URL")
     api_key: str = Field(description="Optional API key, required for most clients even local", default='NOT_A_REAL_KEY')
     support_autoload: Optional[bool] = Field(description="Manual model loading URL", default=True)
-    models: List[LlamaModelData] = Field(description="Hosted LLMs", default_factory=list)
+    models: Dict[str, LlamaModelData] = Field(description="Hosted LLMs", default_factory=dict)
     get_available_models: ImportString
     get_model: ImportString

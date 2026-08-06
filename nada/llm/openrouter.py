@@ -51,7 +51,8 @@ class MyOpenRouterModel(BaseModel):
     aliases: Optional[List[str]] = Field(description="Aliases for the model", default_factory=list)
     tags: Optional[List[str]] = Field(description="Tags", default_factory=list)
     created: Optional[int] = Field(description="Creation time")
-    model_status: str = Field(description="Model is loaded or unloaded", default='loaded')
+    model_status: str = Field(description="Model is loaded or unloaded", default='unloaded')
+    selected: bool = Field(description="Model is selected for load and use, even if already loaded.", default=False)
     # TODO fix model_args with a real model? Probably will not use it.
     model_args: dict | None = None
     reasoning: dict | None = None
@@ -83,10 +84,10 @@ def get_available_openrouter_models(provider: ModelProvider) -> ModelProvider:
     response = requests.get(url, headers=headers, timeout=api_timeout)
     model_list = response.json()['data']
     logger.info(f'Found {len(model_list)} available Openrouter models')
-    new_models = []
+    new_models = {}
     for model in model_list:
         model_obj = MyOpenRouterModel(**model)
-        new_models.append(model_obj)
+        new_models[model_obj.id] = model_obj
     provider.models = new_models
     return provider
 

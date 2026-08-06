@@ -37,7 +37,7 @@ def get_available_llama_models(provider: ModelProvider) -> ModelProvider:
     url = f"{provider.models_url}"  # noqa E501
     response = requests.get(url, timeout=provider.models_api_timeout)
     model_list = response.json()['data']
-    new_models = []
+    new_models = {}
     arg_prefix = '--'
     for model in model_list:
         try:
@@ -65,7 +65,7 @@ def get_available_llama_models(provider: ModelProvider) -> ModelProvider:
             **model
         )
 
-        new_models.append(model_obj)
+        new_models[model_obj.id] = model_obj
 
     provider.models = new_models
     return provider

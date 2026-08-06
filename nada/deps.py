@@ -39,15 +39,15 @@ def get_fastapi_agent():
             break
     if selected_provider is None:
         raise RuntimeError("Unable to create FastAPI Agent, no valid provider found.")
-    for model in selected_provider.models:
+    for mod_id, model in selected_provider.models.items():
         # get the loaded model
         if model.selected:
-            use_model = provider.get_model(model_id=model.id, provider=selected_provider)
-            logger.info(f'Found selected model: {model.id}, {model.model_status}')
+            use_model = provider.get_model(mod_id, provider=selected_provider)
+            logger.info(f'Found selected model: {mod_id}, {model.model_status}')
     if not use_model:
         # This should never happen, but. . .
-        model_id = selected_provider.models[0].id
-        use_model = providers.get_model_obj(model_id=model_id, provider_name=provider.name)
+        model_id = list(selected_provider.models.keys())[0]
+        use_model = providers.get_model_obj(model_id=model_id, provider_name=selected_provider.name)
         use_model.selected = True
         # TODO consider changing the pydantic model so that models are a dict
     logger.info(f"Model selected: {use_model.model_id}")

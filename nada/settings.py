@@ -2,6 +2,7 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from fastapi.templating import Jinja2Templates
+from slugify import slugify
 
 from nada import PARENT_DIR_PATH, ROOT_DIR_PATH
 
@@ -32,7 +33,7 @@ def load_providers():
     selected_model = None
     if settings.PROVIDER_DEFAULT:
         try:
-            def_provider = providers.providers[settings.PROVIDER_DEFAULT]
+            def_provider = providers.providers[slugify(settings.PROVIDER_DEFAULT)]
         except KeyError:
             raise RuntimeError(f"Invalid default provider: {settings.PROVIDER_DEFAULT}, verify provider configuration at {config_path}")
         if len(def_provider.models) > 0:  # provider is offline
@@ -40,13 +41,14 @@ def load_providers():
             selected_provider.is_active = True
             if settings.PROVIDER_MODEL_DEFAULT:
                 # TODO, once again. . .make this a dict
-                for model in selected_provider.models:
-                    if model.id == settings.PROVIDER_MODEL_DEFAULT:
+                for mod_id, model in selected_provider.models.items():
+                    if mod_id == settings.PROVIDER_MODEL_DEFAULT:
                         model.selected = True
-                        selected_model = model.id
+                        selected_model = mod_id
             else:
                 # get the first model
-                selected_model = selected_provider.models[0]
+                mod_id = list(selected_provider.models.keys())[0]
+                selected_model = selected_provider.models[mod_id]
                 print(f"Selected first available model for provider {settings.PROVIDER_DEFAULT}")
         else:
             # TODO add logging
