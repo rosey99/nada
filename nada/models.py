@@ -7,7 +7,7 @@ from fastapi import UploadFile
 from pydantic_ai import RunContext, RunUsage
 
 class APIResponse(BaseModel):
-    """Model for API response data"""
+    """Model for API response data for """
 
     status_code: int
     data: Any
@@ -21,6 +21,8 @@ class AgentQuery(BaseModel):
     query: str
     history: Optional[list] = None
     files: Optional[List[UploadFile]] = None
+    model_id: Optional[str] = None
+    provider_slug: Optional[str] = None
 
 
 class AgentResponse(BaseModel):
