@@ -8,6 +8,10 @@ class ChatApp {
     // Conversation history
     this.conversationHistory = [];
     this.selectedHistory = [];
+    this.selectedFiles = [];
+    this.fileInput = document.getElementById("fileInput");
+    this.attachButton = document.getElementById("attachButton");
+    this.fileListing = document.getElementById("fileListing");
     // Theme state (default to minimal)
     this.currentTheme = "minimal";
 
@@ -53,6 +57,8 @@ class ChatApp {
     this.toggleAll.addEventListener("change", () =>
       this.toggleSelectAll(this.toggleAll),
     );
+    this.attachButton.addEventListener("click", () => this.fileInput.click());
+    this.fileInput.addEventListener("change", () => this.addFile());
   }
 
   changeTheme(theme) {
@@ -149,35 +155,35 @@ class ChatApp {
       for (let provKey in this.providerData) {
         if (provKey != provID) {
           this.providerData[provKey].is_active = false;
-          console.log("NOT provider key: " + provID + " " + provKey);
+          console.log("Deactivating provider key: " + provID + " " + provKey);
         } else {
           this.providerData[provKey].is_active = true;
-          console.log("provider key: " + provID + " " + provKey);
+          console.log("Activating provider key: " + provID + " " + provKey);
         }
       }
-      this.addProvidersOptions(this.providerData);
+      //this.addProvidersOptions(this.providerData);
     }
 
-    if (this.modelSelector.value) {
-      try {
-        const response = await fetch("/agent/v1/models_update", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            provider_name: this.providerSelector.value,
-            model_id: this.modelSelector.value,
-          }),
-        });
-        console.log("Updating model");
-        let provObj = await response.json();
-        this.providerData = provObj;
-        this.addProvidersOptions(provObj);
-      } catch (error) {
-        this.addErrorMessage("Sorry, I encountered an error: " + error.message);
-      }
-    }
+    // if (this.modelSelector.value) {
+    //   try {
+    //     const response = await fetch("/agent/v1/models_update", {
+    //       method: "POST",
+    //       headers: {
+    //         "Content-Type": "application/json",
+    //       },
+    //       body: JSON.stringify({
+    //         provider_name: this.providerSelector.value,
+    //         model_id: this.modelSelector.value,
+    //       }),
+    //     });
+    //     console.log("Updating model");
+    //     let provObj = await response.json();
+    //     this.providerData = provObj;
+    //     this.addProvidersOptions(provObj);
+    //   } catch (error) {
+    //     this.addErrorMessage("Sorry, I encountered an error: " + error.message);
+    //   }
+    // }
   }
 
   addProvidersOptions(providers_obj) {
@@ -302,6 +308,8 @@ class ChatApp {
       body: JSON.stringify({
         query: message,
         history: this.conversationHistory,
+        provider_slug: this.providerSelector.value,
+        model_id: this.modelSelector.value,
       }),
     });
 
@@ -375,6 +383,56 @@ class ChatApp {
         }
       }
     }
+  }
+
+  addFile(fileForm) {
+    // get the file data and push it to an array
+    const fileInput = this.fileInput;
+    //this.selectedFiles = [];
+    for (var i = 0; i < fileInput.files.length; i++) {
+      this.selectedFiles.push(fileInput.files[i]);
+      console.log(
+        "Upload file: " +
+          fileInput.files[i].name +
+          " length: " +
+          fileInput.files[i].size,
+      );
+    }
+    this.updateFileList();
+  }
+
+  updateFileList() {
+    const filesList = this.fileListing;
+    const selFiles = this.selectedFiles;
+    // Clear existing file attachments
+    if (filesList.children.length > 0) {
+      Array.from(filesList.children).forEach((para) => {
+        filesList.removeChild(para);
+      });
+    }
+    for (var i = 0; i < selFiles.length; i++) {
+      let rem_button = document.createElement("button");
+      rem_button.textContent = "X";
+      rem_button.addEventListener(
+        "click",
+        this.removeFile.bind(this, i),
+        false,
+      );
+      let file_item = document.createElement("p");
+      file_item.textContent = `${selFiles[i].name} | ${selFiles[i].size} bytes `;
+      rem_button.style.color = "red";
+      file_item.appendChild(rem_button);
+      filesList.appendChild(file_item);
+    }
+    console.log("Added files listings: " + filesList.children.length);
+  }
+
+  removeFile(index) {
+    let thisIndex = Number(index);
+    console.log("Removing file at index: " + thisIndex);
+    this.selectedFiles.splice(thisIndex, 1);
+    console.log("File list is now: " + this.selectedFiles.length);
+    this.updateFileList();
   }
 
   clearHistory() {

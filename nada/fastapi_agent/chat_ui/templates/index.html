@@ -62,28 +62,29 @@
 
                 <div class="chat-input">
                     <div class="input-container">
-                        <input
-                            type="file"
-                            id="fileInput"
-                            style="display: none"
-                        />
-                        <button
-                            title="Attach file..."
-                            onclick="
-                                document.getElementById('fileInput').click()
-                            "
-                        >
-                            <svg
-                                width="24"
-                                height="24"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                            >
-                                <path d="M12 5v14M5 12l7 7 7-7" />
-                            </svg>
-                        </button>
+                        <div id="file-container">
+                            <form id="fileUpload" name="fileUpload">
+                                <input
+                                    type="file"
+                                    id="fileInput"
+                                    style="display: none" multiple
+                                />
+                            </form>
+                            <button title="Attach file..." id="attachButton">
+                                <svg
+                                    width="24"
+                                    height="24"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                >
+                                    <path d="M12 5v14M5 12l7 7 7-7" />
+                                </svg>
+                            </button>
+                        </div>
+
+
                         <textarea
                             id="messageInput"
                             placeholder="Type your message here..."
@@ -105,6 +106,9 @@
                             </svg>
                         </button>
                     </div>
+                </div>
+                <div id="fileListing">
+
                 </div>
             </div>
 
