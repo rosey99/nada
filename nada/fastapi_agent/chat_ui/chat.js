@@ -117,7 +117,6 @@ class ChatApp {
             console.log(`${key}: ${opt[key]}`);
           });
         });
-        //console.log("resp history: " + response.history);
         this.conversationHistory = response.history;
         this.updateHistoryIndicator();
       }
@@ -161,29 +160,7 @@ class ChatApp {
           console.log("Activating provider key: " + provID + " " + provKey);
         }
       }
-      //this.addProvidersOptions(this.providerData);
     }
-
-    // if (this.modelSelector.value) {
-    //   try {
-    //     const response = await fetch("/agent/v1/models_update", {
-    //       method: "POST",
-    //       headers: {
-    //         "Content-Type": "application/json",
-    //       },
-    //       body: JSON.stringify({
-    //         provider_name: this.providerSelector.value,
-    //         model_id: this.modelSelector.value,
-    //       }),
-    //     });
-    //     console.log("Updating model");
-    //     let provObj = await response.json();
-    //     this.providerData = provObj;
-    //     this.addProvidersOptions(provObj);
-    //   } catch (error) {
-    //     this.addErrorMessage("Sorry, I encountered an error: " + error.message);
-    //   }
-    // }
   }
 
   addProvidersOptions(providers_obj) {
@@ -377,7 +354,6 @@ class ChatApp {
       if (checkbox !== "undefined" && checkbox.nodeName === "INPUT") {
         if (checkboxAll.checked) {
           checkbox.checked = true;
-          //console.log("Cb: " + checkbox.checked); // Perform actions on the child element
         } else {
           checkbox.checked = false;
         }
@@ -388,7 +364,6 @@ class ChatApp {
   addFile(fileForm) {
     // get the file data and push it to an array
     const fileInput = this.fileInput;
-    //this.selectedFiles = [];
     for (var i = 0; i < fileInput.files.length; i++) {
       this.selectedFiles.push(fileInput.files[i]);
       console.log(
@@ -446,7 +421,6 @@ class ChatApp {
       if (checkbox !== "undefined" && checkbox.nodeName === "INPUT") {
         if (checkbox.checked) {
           indexes.push(i);
-          //console.log("Cb: " + checkbox.checked); // Perform actions on the child element
         }
       }
     }
