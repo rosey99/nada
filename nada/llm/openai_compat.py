@@ -16,17 +16,17 @@ def get_llama_model(model_id: str, provider: ModelProvider) -> OpenAIChatModel:
     """
     Get a local llama.cpp model
     """
-    settings = ModelSettings(thinking=False, timeout=0)
+    #settings = ModelSettings(thinking=False, timeout=0)
     model = OpenAIChatModel(
         model_id,
         provider=OpenAIProvider(
             base_url=provider.prompt_url,
             api_key=provider.api_key,
-            # override client timeout here
+            # TODO override client timeout here with per-provider/model settings
             http_client=httpx.AsyncClient(timeout=None),
         ),
     )
-    logger.info(f'Initialized model {model_id} with settings: {str(settings)}')
+    logger.info(f'Initialized model {model_id}')
     return model
 
 
@@ -44,6 +44,7 @@ def get_available_llama_models(provider: ModelProvider) -> ModelProvider:
             args = model['status']['args']
             status = model['status']['value']
             # convert args from list to dict suitable for validation
+            #  llama.cpp describes args as a list of c/l switches, prefixed with '--'
             argcount = len(args)
             new_args = {}
             key = 'no_key'

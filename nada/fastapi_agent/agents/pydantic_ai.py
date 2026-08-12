@@ -1,12 +1,13 @@
 import logging
 from typing import List, Optional
 
-from pydantic_ai import Agent
+from pydantic_ai import Agent, BinaryContent
 from pydantic_ai.usage import UsageLimits
 from pydantic_ai.models import Model, ModelSettings
 
 from .base_agent import BaseAgent
 
+from nada.models import BaseModelData
 
 class PydanticAIAgent(BaseAgent):
     """
@@ -15,8 +16,9 @@ class PydanticAIAgent(BaseAgent):
 
     def __init__(
         self,
-        model_name: str = "openai:gpt-4.1-mini",
-        model: Optional[Model] = None,
+        model_data: BaseModelData,
+        #model_name: str = "openai:gpt-4.1-mini",
+        model: Model,
         prompt: Optional[str] = None,
         tools: Optional[List] = None,
         capabilities: Optional[List] = None,
@@ -33,7 +35,7 @@ class PydanticAIAgent(BaseAgent):
         """
         self.provider = "pydantic_ai"
         self.prompt = prompt
-        self.model = model or model_name
+        self.model = model  #or model_name
         # self.agent = self.initialize_agent()
         super().__init__(provider=self.provider, tools=tools, capabilities=capabilities, logger=logger)
 
@@ -51,7 +53,7 @@ class PydanticAIAgent(BaseAgent):
             #settings=settings,
         )
 
-    async def chat(self, message: str, history: list = None) -> tuple[str, list]:
+    async def chat(self, message: str, bin_content: List[BinaryContent] = None, history: List[str] = None) -> tuple[str, list]:
         """
         Chat with message history support
 
@@ -64,7 +66,8 @@ class PydanticAIAgent(BaseAgent):
         """
         if history is None:
             history = []
-
+        if bin_content  is None:
+            bin_content = []
         try:
             # Create a new conversation context with history
             # Note: pydantic-ai might expect a different format for message_history
@@ -81,8 +84,10 @@ class PydanticAIAgent(BaseAgent):
                 enhanced_message = f"Previous conversation:\n{conversation_context}\n\nCurrent message: {message}"
             else:
                 enhanced_message = message
-
-            result = await self.agent.run(enhanced_message, usage_limits = UsageLimits(request_limit=100))
+            # TODO move request limits out to config
+            messages = [enhanced_message]
+            messages.extend(bin_content)
+            result = await self.agent.run(messages, usage_limits = UsageLimits(request_limit=100))
             response_text = result.output
             response_usage = result.usage
 

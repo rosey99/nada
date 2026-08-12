@@ -48,6 +48,8 @@ def get_fastapi_agent(app: FastAPI, agent_query: AgentQuery):
         logger.info(f'Auto-selected active provider: {selected_slug}')
     if selected_provider is None:
         raise RuntimeError("Unable to create FastAPI Agent, no valid provider found.")
+    # Done with provider validation, get actual model and model_data
+    model_data = None
     if agent_query.model_id is not None:
         model_data = selected_provider.models.get(agent_query.model_id, None)
         if model_data:
@@ -56,20 +58,26 @@ def get_fastapi_agent(app: FastAPI, agent_query: AgentQuery):
         for model_id, model in selected_provider.models.items():
             # get the loaded model
             if model.selected:
+                model_data = model
                 use_model = provider.get_model(model_id, provider=selected_provider)
                 logger.info(f'Found selected model: {model_id}, {model.model_status}')
     if not use_model:
         # This should never happen, but. . .
         model_id = list(selected_provider.models.keys())[0]
+        model_data = selected_provider.models[model_id]
         use_model = providers.get_model_obj(model_id=model_id, provider_slug=selected_slug)
         selected_provider.models[model_id].selected = True
         logger.info(f"Auto selected model for active provider: {use_model.id}")
+    if not model_data or not use_model:
+        # This should never occur
+        raise RuntimeError(f"Unable to load model for provider {selected_provider.name} with slug: {selected_slug} and model: {model_id}")
     # create the FastAPI Agent instance
     agent = FastAPIAgent(
         app,
         # TODO providers can go now
         providers=providers,
         model=use_model,
+        model_data=model_data,
         tools = [duckduckgo_search_tool(), web_fetch_tool(max_content_length=None)],
         capabilities=[Shell(), FileSystem()],
         logger=logger,

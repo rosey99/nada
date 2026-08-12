@@ -72,7 +72,25 @@ class ModelArchitecture(BaseModel):
     input_modalities: Set[str] = Field(description="Allowed input content types.")
     output_modalities: Set[str] = Field(description="Allowed output content types.")
 
-class LlamaModelData(BaseModel):
+class BaseModelData(BaseModel):
+    """
+    Base static data for known Llama.cpp models
+    """
+    model_config = ConfigDict(extra='ignore')
+    #
+    id: str = Field(description="Model ID")
+    aliases: Optional[List[str]] = Field(description="Aliases for the model", default_factory=list)
+    tags: Optional[List[str]] = Field(description="Tags", default_factory=list)
+    owned_by: Optional[str] = Field(description="Model owner")
+    created: Optional[int] = Field(description="Creation time")
+    model_status: str = Field(description="Model is loaded or unloaded")
+    selected: bool = Field(description="Model is selected for load and use, even if already loaded.", default=False)
+    # for consistency with Openrouter standard
+    context_size: int = Field(description="Model context length.")
+    model_args: LlamaArgs
+    architecture: ModelArchitecture
+
+class LlamaModelData(BaseModelData):
     """
     Base static data for known Llama.cpp models
     """
