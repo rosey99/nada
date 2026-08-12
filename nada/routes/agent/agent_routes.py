@@ -68,36 +68,3 @@ async def query_ai_agent(request: Request,
             error=str(e),
             history=history,
         )
-
-
-# @agent_router.post("/models_update", response_model=Dict[str, ModelProvider])
-# async def update_model(model_qry: ModelQuery, providers: ProvidersDep):
-#     # TODO this is a mess, needs a refactor as import here breaks design
-#     #  need access to agent in update model endpoint, and that is a problem
-#     #  maybe add to settings object parsed from seperate yaml?
-#     provider = providers.providers[model_qry.provider_name]
-#     model = None
-#     logger.info(f"Update provider -> {provider.name} with {len(provider.models)} models")
-#     provider.get_available_models(provider)
-#     for m in provider.models.values():
-#         if m.id == model_qry.model_id:
-#             model = m
-#     if not model:
-#         # This should never happen
-#         logger.error(f"Unable to locate model: {model_qry.model_id} for provider {provider.name}")
-#     else:
-#         model = providers.get_model_obj(model_qry.model_id, model_qry.provider_name)
-#         agent.assistant.agent.model = model
-#     for k, v in providers.providers.items():
-#         if k != model_qry.provider_name:
-#             if v.is_active:
-#                 v.is_active = False
-#         else:
-#             v.is_active = True
-#             for mod_id, model in v.models.items():
-#                 if mod_id != model_qry.model_id and model.model_status == 'loaded':
-#                     model.model_status = 'unloaded'
-#                 if mod_id == model_qry.model_id:
-#                     model.model_status = 'loaded'
-#                     model.selected = True
-#     return providers.providers
