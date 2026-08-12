@@ -1,8 +1,9 @@
 from pydantic import BaseModel, ConfigDict, Field, ImportString, model_validator
 from typing import Dict, Optional, List, Set, Any
 from typing_extensions import Self
+import json
 
-from fastapi import UploadFile
+from fastapi import UploadFile, Form
 
 from pydantic_ai import RunContext, RunUsage
 
@@ -23,6 +24,14 @@ class AgentQuery(BaseModel):
     files: Optional[List[UploadFile]] = None
     model_id: Optional[str] = None
     provider_slug: Optional[str] = None
+
+    @classmethod
+    def as_string(
+        cls,
+        agent_query: str = Form(...),
+    ) -> 'AgentQuery':
+        ret_val = json.loads(agent_query)
+        return cls(**ret_val)
 
 
 class AgentResponse(BaseModel):

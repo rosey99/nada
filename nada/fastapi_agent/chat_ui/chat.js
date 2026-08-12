@@ -277,21 +277,28 @@ class ChatApp {
   }
 
   async callAgentAPI(message) {
+    let dataObj = {
+      query: message,
+      history: this.conversationHistory,
+      provider_slug: this.providerSelector.value,
+      model_id: this.modelSelector.value,
+    };
+
+    const formData = new FormData();
+    formData.append("agent_query", JSON.stringify(dataObj));
+
+    for (let i = 0; i < this.selectedFiles.length; i++) {
+      formData.append("files", this.selectedFiles[i]);
+      console.log("Adding file: " + this.selectedFiles[i].name);
+    }
+
     const response = await fetch("/agent/v1/query", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        query: message,
-        history: this.conversationHistory,
-        provider_slug: this.providerSelector.value,
-        model_id: this.modelSelector.value,
-      }),
+      body: formData,
     });
 
+    // TODO fix this with better error handling, free the UI
     if (!response.ok) {
-      //throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       this.addErrorMessage(
         "Sorry, I encountered an error: " +
           response.status +
@@ -299,7 +306,10 @@ class ChatApp {
           response.statusText,
       );
     }
-
+    // reset files only when successful for now
+    this.selectedFiles = [];
+    this.updateFileList();
+    // return response data
     return await response.json();
   }
 
