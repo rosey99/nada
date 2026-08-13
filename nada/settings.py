@@ -71,12 +71,15 @@ def load_providers():
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         # Use top level .env file (one level above ./backend/)
-        env_file='.env',
+        env_file= ROOT_DIR_PATH + '/.env',
         env_ignore_empty=True,
         extra="ignore",
     )
     log_level: str = Field(default="info", description="Logging level")
     #model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    COOKIE_NAME: str = "access_token"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    #
     CELERY_RESULT_URI: str
     CELERY_BROKER_URI: str
     REDIS_CACHE_HOST: str
@@ -103,7 +106,7 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-
+#print("settings: ", settings)
 templates = Jinja2Templates(directory=PARENT_DIR_PATH + "/fastapi_agent/chat_ui/templates")
 
 providers = load_providers()

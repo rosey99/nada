@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 REDIS_DATA_HOST =  settings.REDIS_DATA_HOST
 REDIS_DATA_PORT = settings.REDIS_DATA_PORT
 REDIS_DATA_DBNUM = settings.REDIS_DATA_DBNUM
-
+print(REDIS_DATA_DBNUM)
 # connection pool
 red_con = redis.Redis(host=REDIS_DATA_HOST,
                       port=REDIS_DATA_PORT,

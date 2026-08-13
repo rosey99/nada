@@ -1,11 +1,53 @@
-from pydantic import BaseModel, ConfigDict, Field, ImportString, model_validator
+from pydantic import BaseModel, ConfigDict, Field, ImportString, EmailStr
 from typing import Dict, Optional, List, Set, Any
-from typing_extensions import Self
+#from typing_extensions import Self
 import json
+import uuid
 
 from fastapi import UploadFile, Form
 
-from pydantic_ai import RunContext, RunUsage
+from pydantic_ai import RunUsage
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class TokenData(BaseModel):
+    username: str | None = None
+
+# Properties to return via API, id is always required
+class User(BaseModel):
+    """
+    Internal User model.
+    """
+    username: str
+    display_name: str
+    is_active: int = Field(default=1, ge=0, lt=2)
+    is_superuser: int = Field(default=0, ge=0, lt=2)
+    email: EmailStr
+    # defaults
+    id: uuid.UUID = Field(description="Unique user identifier", default_factory=uuid.uuid4)
+    full_name: str | None = None
+    disabled: int = Field(default=0, ge=0, lt=2)
+
+
+class UserPublic(BaseModel):
+    """
+    The public User model.
+    """
+    model_config = ConfigDict(extra='ignore')
+    id: uuid.UUID
+    display_name: str
+    is_active: bool
+
+
+class UserInDB(BaseModel):
+    hashed_password: str
+    is_active: int = Field(default=1, ge=0, lt=2)
+    id: uuid.UUID = Field(description="Unique user identifier")
+
 
 class APIResponse(BaseModel):
     """Model for API response data for """

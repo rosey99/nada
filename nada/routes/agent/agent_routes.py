@@ -1,13 +1,14 @@
 from typing import Annotated, Optional
-
+from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, HTTPException, Request, UploadFile, File, Form, Depends
-from fastapi.responses import HTMLResponse
-
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic_ai import BinaryContent
 
 from nada.deps import get_fastapi_agent, SessionDep
 from nada.models import AgentQuery, AgentResponse, ModelQuery, ModelProvider
-from nada.settings import templates
+from nada import security
+from nada.settings import settings, templates
 
 import logging
 
@@ -15,9 +16,47 @@ logger = logging.getLogger(__name__)
 
 agent_router = APIRouter(prefix="/agent/v1", tags=["agent"])
 
+@agent_router.get("/login", tags=['login',], response_class=HTMLResponse)
+async def get_login_user(request: Request): #, accept_language: str = Depends(get_accept_language)):
+    #logger.debug('Got the item request')
+    #logger.debug(f'Got the item request for locale: {request.headers.get("Accept-Language", None)}')
+    # this_locale = request.headers.get("Accept-Language", None)
+    # lang = 'en'
+    # if this_locale:
+    #     lang = this_locale[:2]
+    #     if lang in TRANSLATIONS:
+    #         this_trans = TRANSLATIONS[lang]
+    #     else:
+    #         this_trans = None
+    # #logger.debug(f'jinja is using: {type(TRANSLATIONS)}')
+    # #templates.env.install_gettext_translations([lang])
+    # if this_trans:
+    #     templates.env.install_gettext_translations(this_trans)
+    return templates.TemplateResponse(
+        request=request, name="login.html", context={}
+    )
+
+@agent_router.post("/login/authorize", tags=['login',], response_class=HTMLResponse)
+async def authenticate(session: SessionDep, request: Request, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
+    logger.info(f"{form_data.username} + {form_data.password}")
+    user = await security.authenticate_user(
+        db=session, username=form_data.username, password=form_data.password
+    )
+    if not user:
+        raise HTTPException(status_code=400, detail="Incorrect ID or password")
+    elif not user.is_active:
+        raise HTTPException(status_code=400, detail="Inactive user")
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    new_token = security.create_access_token(user.id.hex, expires_delta=access_token_expires)
+    #token = Token(access_token=new_token)
+    response = RedirectResponse(status_code=303, url='/agent/v1/chat')
+    response.set_cookie(key=settings.COOKIE_NAME, value=f"Bearer {new_token}") #, httponly=True)
+    # token_header = f'{token.token_type} {token.access_token}'
+    # headers = {'Authorization': token_header}
+    return response
 
 @agent_router.get("/chat", response_class=HTMLResponse)
-async def chat_page(request: Request):
+async def chat_page(request: Request, current_user: security.CurrentCookieUser):
     """
     Main chat page.
     """
@@ -39,7 +78,8 @@ async def query_ai_agent(request: Request,
     agent = get_fastapi_agent(app=request.app, agent_query=agent_query)
     # TODO session test for persistence dep
     #   and file handling
-    r = await session.get('test')
+    r = await session.set('test123', 'test')
+    r = await session.get('test123')
     logger.info(f'deps test: {r}')
     logger.info(f'files test: {files}')
     # File/attachment handling
