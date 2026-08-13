@@ -1,10 +1,11 @@
 from typing import Annotated, Dict
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm
 from fastapi import APIRouter, Request, Depends, HTTPException, status
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from nada.models import ModelProvider, Token, User
 from nada.deps import ProvidersDep, SessionDep
-from nada.security import authenticate_user, create_access_token, get_current_active_user, ACCESS_TOKEN_EXPIRE_MINUTES
+from nada.security import authenticate_user, create_access_token, get_current_active_user
+from nada.settings import settings
 
 api_router = APIRouter(prefix="/api/v1")
 
@@ -36,7 +37,7 @@ async def login_for_access_token(
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )

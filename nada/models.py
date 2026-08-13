@@ -38,7 +38,7 @@ class UserPublic(BaseModel):
     The public User model.
     """
     model_config = ConfigDict(extra='ignore')
-    id: uuid.UUID
+    #id: uuid.UUID
     display_name: str
     is_active: bool
 
