@@ -1,11 +1,10 @@
-{% extends "base.html" %} {% block head %} {% block title %}"Login"{% endblock
-%} {{ super() }} {% endblock %} {% block content %}
-<h1>Log In:</h1>
-<br />
-
-<div>
+{% extends "base.html" %} {% block head %} {{ super() }} {% endblock %} {% block
+content %}
+<div class="chat-panel">
+    <h1>Log In:</h1>
+    <br />
     <form action="/agent/v1/login/authorize" method="post">
-        <div class="container">
+        <div>
             <label for="username"><b>Username</b></label>
             <input
                 type="text"
@@ -27,6 +26,6 @@
     </form>
 </div>
 <div>
-    <p>This is not editable.</p>
+    <!--<p>This is not editable.</p>-->
 </div>
 {% endblock %}
