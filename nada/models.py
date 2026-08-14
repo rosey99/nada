@@ -30,7 +30,6 @@ class User(BaseModel):
     # defaults
     id: uuid.UUID = Field(description="Unique user identifier", default_factory=uuid.uuid4)
     full_name: str | None = None
-    disabled: int = Field(default=0, ge=0, lt=2)
 
 
 class UserPublic(BaseModel):
@@ -45,7 +44,8 @@ class UserPublic(BaseModel):
 
 class UserInDB(BaseModel):
     hashed_password: str
-    is_active: int = Field(default=1, ge=0, lt=2)
+    is_active: int
+    username: str
     id: uuid.UUID = Field(description="Unique user identifier")
 
 

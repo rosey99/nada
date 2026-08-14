@@ -70,13 +70,15 @@ def load_providers():
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        # Use top level .env file (one level above ./backend/)
+        # Use top level .env file (one level above ./nada/)
+        #  ignored in default compose/docker setup
+        #  which uses env vars instead
         env_file= ROOT_DIR_PATH + '/.env',
         env_ignore_empty=True,
         extra="ignore",
     )
     log_level: str = Field(default="info", description="Logging level")
-    #model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    DEFAULT_TENANT: str = "nada"
     COOKIE_NAME: str = "access_token"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     SECRET_KEY: str = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
@@ -108,7 +110,7 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-#print("settings: ", settings)
+
 templates = Jinja2Templates(directory=PARENT_DIR_PATH + "/fastapi_agent/chat_ui/templates")
 
 providers = load_providers()
