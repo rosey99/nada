@@ -36,12 +36,14 @@ class KVBase:
         #self.services_key = service_name
 
     async def get_services(self) -> List[str]:
-        services = await self.redis.smembers(self.prefix)
-        return [service.decode() for service in services]
+        services = await self.redis.smembers(name=self.prefix)
+        if services:
+            return [service.decode() for service in services]
+        return []
 
     async def delete_service(self, service_name: str):
         # first, get the keys for service
-        service_keys = await self.redis.smembers(f'{self.prefix}:{service_name}')
+        service_keys = await self.redis.smembers(name=f'{self.prefix}:{service_name}')
         if service_keys:
             try:
                 await self.redis.fcall("remove_keys", len(service_keys), *service_keys)
@@ -51,10 +53,11 @@ class KVBase:
     async def get_service_all(self, service_name: str) -> Dict[str, str]:
         keys = await self.redis.smembers(f'{self.prefix}:{service_name}')
         kvs = dict()
-        for key in keys:
-            k = key.decode().rsplit(':', maxsplit=1)[1]
-            v = await self.redis.get(key)
-            kvs[k] = v.decode()
+        if keys:
+            for key in keys:
+                k = key.decode().rsplit(':', maxsplit=1)[1]
+                v = await self.redis.get(key)
+                kvs[k] = v.decode()
         return kvs
 
     async def add_service_keys(self, service_name: str, keys: List[str], values: List[str]):
@@ -79,3 +82,9 @@ class KVBase:
             key = f'{self.prefix}:{service_name}:{keys[i]}'
             real_keys.append(key)
         return await self.redis.fcall('remove_keys', key_count, *real_keys)
+
+class KVContext(KVBase):
+    def __init__(self, redis_con: redis.Redis, username: str):
+        self.prefix=f'context_{username}'
+        self.redis = red_con
+        logger.info(f'Initializing kv context for user: {self.prefix}')

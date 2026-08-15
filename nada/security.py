@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-from typing import Annotated, Any
+from typing import Annotated, Any, Optional
 
 import jwt
 from fastapi import Depends, HTTPException, status, Request
@@ -21,11 +21,18 @@ password_hash = PasswordHash.recommended()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/token")
 
-CredentialsException = HTTPException(
-    status_code=status.HTTP_401_UNAUTHORIZED,
-    detail="Could not validate credentials",
-    headers={"WWW-Authenticate": "Bearer"},
-)
+class CredentialsException(HTTPException):
+
+    status_code = status.HTTP_401_UNAUTHORIZED
+    detail = "Could not validate credentials"
+    headers = {"WWW-Authenticate": "Bearer"}
+
+    def __init__(self):
+        super().__init__(
+            status_code=self.status_code,
+            detail=self.detail,
+            headers=self.headers
+        )
 
 
 def verify_password(plain_password, hashed_password):
@@ -38,9 +45,20 @@ def get_password_hash(password):
 
 async def get_user(db: SessionDep, username: str):
     #h_password = await db.hget(name=f"nada:users:{username}", key="hashed_password")
-    h_password, is_active, user_id = await db.hmget(name=f"nada:users:{username}", keys=["hashed_password", "is_active", "id"])
+    h_password, is_active, is_superuser, user_id, display_name, full_name = await db.hmget(
+        name=f"nada:users:{username}",
+        keys=["hashed_password", "is_active", "is_superuser","id", "display_name", "full_name"]
+    )
     if h_password:
-        user_dict = {"hashed_password": h_password.decode(), "is_active": is_active, "id": user_id, "username": username}
+        user_dict = {
+            "hashed_password": h_password.decode(),
+            "is_active": is_active,
+            "is_superuser": is_superuser,
+            "id": user_id,
+            "username": username,
+            "display_name": display_name,
+            "full_name": full_name
+        }
         return UserInDB(**user_dict)
 
 
@@ -49,7 +67,6 @@ async def authenticate_user(db: SessionDep, username: str, password: str):
     if not user:
         logger.info(f"User does not exist: {username}")
         return False
-    logger.info(f"stored password: {user.hashed_password} -> hashed: {get_password_hash(password)}")
     if not verify_password(password, user.hashed_password):
         logger.info(f"Password verification failed for {username}")
         return False
@@ -61,7 +78,7 @@ def create_access_token(subject: str | Any, expires_delta: timedelta | None = No
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+        expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
@@ -75,28 +92,35 @@ async def get_current_user_from_cookie(db: SessionDep, request: Request) -> User
     for views that should work for both logged in, and not logged in users.
     """
     token = request.cookies.get(settings.COOKIE_NAME, None)
-    logger.info(f'Got a cookie token: {token}')
     user = None
     token_user = None
     if token:
         token = token.split(" ")[1]
-        token_user = await get_current_user(db=db, token=token, raise_on_fail=False)
-    if token_user is not CredentialsException:
+        token_user = await get_current_user(db=db, request=request, token=token, raise_on_fail=False)
+    if isinstance(token_user, UserInDB):
         user = token_user
+        new_token = create_access_token(user.username)
+        request.cookies[settings.COOKIE_NAME] = f"Bearer {new_token}"
+        logger.info("Refreshing token")
     else:
-        #raise credentials_exception
         logger.info("Redirecting to login")
         return RedirectResponse(url='/agent/v1/login', status_code=303)
-    logger.info(f'Got a cookie user: {token_user}')
+    if user:
+        logger.info(f'Got a cookie toekn for user: {user.id.hex}')
     return user
 
 
-async def get_current_user(db: SessionDep, token: Annotated[str, Depends(oauth2_scheme)], raise_on_fail: bool = True):
+async def get_current_user(db: SessionDep, request: Request, token: Optional[Annotated[str, Depends(oauth2_scheme)]]=None, raise_on_fail: bool = True):
     result = None
     try:
+        cookie_token = request.cookies.get(settings.COOKIE_NAME, None)
+        if cookie_token and not token:
+            token = cookie_token.split(" ")[1]
+            logger.info("Validating cookie token for user")
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         username = payload.get("sub")
         if username is None:
+            logger.info("No user found for token")
             result = CredentialsException
     except InvalidTokenError:
         result = CredentialsException
@@ -110,9 +134,9 @@ async def get_current_user(db: SessionDep, token: Annotated[str, Depends(oauth2_
 
 
 async def get_current_active_user(
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: Annotated[UserInDB, Depends(get_current_user)],
 ):
-    if current_user.disabled:
+    if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 

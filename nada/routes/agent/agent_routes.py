@@ -60,13 +60,14 @@ async def chat_page(request: Request, current_user: security.CurrentCookieUser):
     """
     Main chat page.
     """
-    if not isinstance(current_user, UserInDB):
+    if isinstance(current_user, UserInDB):
+        context = {'APP_TITLE': "Nada Agent Chat", "current_user": current_user}
+        return templates.TemplateResponse(
+                request=request, name="index.html", context=context
+            )
+    else:
         return current_user
-    context = {'APP_TITLE': "Nada Agent Chat"}
 
-    return templates.TemplateResponse(
-            request=request, name="index.html", context=context
-        )
 
 @agent_router.post("/query", response_model=AgentResponse)
 async def query_ai_agent(request: Request,
@@ -78,6 +79,8 @@ async def query_ai_agent(request: Request,
     Ask the AI agent about available API endpoints and how to use them.
     The agent can help you understand what each endpoint does and how to call it.
     """
+    if isinstance(current_user, security.CredentialsException) or current_user is None:
+        raise security.CredentialsException
     agent = get_fastapi_agent(app=request.app, agent_query=agent_query)
     # TODO session test for persistence dep
     #   and file handling

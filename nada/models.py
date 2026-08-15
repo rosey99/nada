@@ -8,6 +8,13 @@ from fastapi import UploadFile, Form
 
 from pydantic_ai import RunUsage
 
+class UserContext(BaseModel):
+    """
+    Reponse model for user k/v stores.
+    """
+    service_prefix: str = 'context'
+    username: str
+
 
 class Token(BaseModel):
     access_token: str
@@ -45,8 +52,12 @@ class UserPublic(BaseModel):
 class UserInDB(BaseModel):
     hashed_password: str
     is_active: int
+    is_superuser: int
     username: str
+    display_name: str
     id: uuid.UUID = Field(description="Unique user identifier")
+    full_name: str | None = None
+
 
 
 class APIResponse(BaseModel):

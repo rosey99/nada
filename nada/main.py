@@ -37,6 +37,6 @@ app = FastAPI(
 app.include_router(agent_router)
 app.include_router(api_router)
 # mount static files
-app.mount("/static", StaticFiles(directory=PARENT_DIR_PATH + "/fastapi_agent/chat_ui"), name="static")
+app.mount("/static", StaticFiles(directory=PARENT_DIR_PATH + "/fastapi_agent/chat_ui/static"), name="static")
 # initialize redis data
 load_funcs()
