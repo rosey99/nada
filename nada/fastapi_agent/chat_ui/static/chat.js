@@ -9,6 +9,7 @@ class ChatApp {
     this.conversationHistory = [];
     this.selectedHistory = [];
     this.selectedFiles = [];
+    this.pendingContextObj = {};
     this.fileInput = document.getElementById("fileInput");
     this.attachButton = document.getElementById("attachButton");
     this.fileListing = document.getElementById("fileListing");
@@ -17,6 +18,7 @@ class ChatApp {
 
     // DOM elements
     this.providerData = null;
+    this.userContextData = null;
     this.providersContent = document.getElementById("providersContent");
     this.providerSelector = document.getElementById("providersSelect");
     this.modelSelector = document.getElementById("modelSelect");
@@ -34,6 +36,14 @@ class ChatApp {
     this.historyIndicator = document.getElementById("historyIndicator");
     this.themeSelector = document.getElementById("themeSelector");
     this.toggleAll = document.getElementById("toggleAllMessages");
+    this.contextSaveButton = document.getElementById("contextSaveButton");
+    this.contextAddButton = document.getElementById("contextAddButton");
+    this.newContextInput = document.getElementById("newContextIn");
+    this.existingContextSel = document.getElementById("existingContext");
+    this.newContextKey = document.getElementById("newContextKey");
+    this.newContextVal = document.getElementById("newContextVal");
+    this.newContextItemsDiv = document.getElementById("newContextItems");
+    this.userContextDiv = document.getElementById("userContext");
 
     this.initializeEventListeners();
     this.updateHistoryIndicator();
@@ -59,6 +69,10 @@ class ChatApp {
     );
     this.attachButton.addEventListener("click", () => this.fileInput.click());
     this.fileInput.addEventListener("change", () => this.addFile());
+    this.contextAddButton.addEventListener("click", () =>
+      this.addPendingContext(),
+    );
+    this.contextSaveButton.addEventListener("click", () => this.saveContext());
   }
 
   changeTheme(theme) {
@@ -89,6 +103,142 @@ class ChatApp {
     return inputString.length > maxLength
       ? inputString.substring(0, maxLength - 5) + "..."
       : inputString;
+  }
+
+  addContext() {
+    const pendingDiv = this.userContextDiv;
+    let userCont = this.userContextData;
+    // clear
+    Array.from(pendingDiv.children).forEach((elem) => {
+      pendingDiv.removeChild(elem);
+    });
+    const newHead = document.createElement("h4");
+    newHead.textContent = "Saved Context";
+    pendingDiv.appendChild(newHead);
+    for (let pendContext in userCont) {
+      console.log("context: " + pendContext);
+      const newContextContent = document.createElement("div");
+      const newTable = document.createElement("table");
+      const newCaption = document.createElement("caption");
+      newCaption.textContent = pendContext;
+      newTable.appendChild(newCaption);
+      newTable.style.captionSide = "top";
+      const headRow = document.createElement("tr");
+      const newH1 = document.createElement("th");
+      newH1.textContent = "Name";
+      const newH2 = document.createElement("th");
+      newH2.textContent = "Value";
+      headRow.appendChild(newH1);
+      headRow.appendChild(newH2);
+      newTable.appendChild(headRow);
+      for (let contName in userCont[pendContext]) {
+        const newRow = document.createElement("tr");
+        const newName = document.createElement("td");
+        const newVal = document.createElement("td");
+        newName.textContent = contName;
+        newVal.textContent = userCont[pendContext][contName];
+        newRow.appendChild(newName);
+        newRow.appendChild(newVal);
+        newTable.appendChild(newRow);
+      }
+      newContextContent.appendChild(newTable);
+      pendingDiv.appendChild(newContextContent);
+    }
+  }
+
+  addPendingContext() {
+    const pendingDiv = this.newContextItemsDiv;
+    let newKey = this.newContextInput.value;
+    let selKey = this.existingContextSel.value;
+    let thisKey = "";
+    if (newKey) {
+      thisKey = newKey;
+    } else {
+      if (selKey) {
+        thisKey = selKey;
+      }
+    }
+    console.log("adding context key: " + thisKey);
+    let thisName = this.newContextKey.value;
+    let thisValue = this.newContextVal.value;
+    if (thisKey && thisName && thisValue) {
+      let anObj = this.pendingContextObj[thisKey];
+      if (anObj) {
+        anObj[thisName] = thisValue;
+      } else {
+        this.pendingContextObj[thisKey] = { [thisName]: thisValue };
+      }
+      console.log("context: " + JSON.stringify(this.pendingContextObj));
+      Array.from(pendingDiv.children).forEach((elem) => {
+        pendingDiv.removeChild(elem);
+      });
+      for (let pendContext in this.pendingContextObj) {
+        const newContextContent = document.createElement("div");
+        const newTable = document.createElement("table");
+        const newCaption = document.createElement("caption");
+        newCaption.textContent = pendContext;
+        newTable.appendChild(newCaption);
+        newTable.style.captionSide = "top";
+        for (let contName in this.pendingContextObj[pendContext]) {
+          const newRow = document.createElement("tr");
+          const newName = document.createElement("td");
+          const newVal = document.createElement("td");
+          newName.textContent = contName;
+          newVal.textContent = this.pendingContextObj[pendContext][contName];
+          //let keynode = document.createElement("p");
+          //let namenode = document.createElement("p");
+          //let valuenode = document.createElement("p");
+          newRow.appendChild(newName);
+          newRow.appendChild(newVal);
+          newTable.appendChild(newRow);
+          //keynode.textContent = pendContext;
+          //namenode.textContent =
+          //  contName + ": " + this.pendingContextObj[pendContext][contName];
+          //valuenode.textContent = this.pendingContextObj[pendContext][contName];
+          newContextContent.appendChild(newTable);
+          //newContextContent.appendChild(namenode);
+          //newContextContent.appendChild(valuenode);
+          pendingDiv.appendChild(newContextContent);
+        }
+      }
+    }
+  }
+
+  async saveContext() {
+    var context = this.pendingContextObj;
+    if (!context) return;
+    // let dataObj = {
+    //   query: message,
+    //   history: this.conversationHistory,
+    //   provider_slug: this.providerSelector.value,
+    //   model_id: this.modelSelector.value,
+    // };
+
+    const startTime = new Date();
+    try {
+      const response = await fetch("/api/v1/context", {
+        method: "PATCH",
+        body: JSON.stringify(context),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      let resObj = await response.json();
+      const endTime = new Date();
+      const elapsedTime = endTime - startTime;
+      console.log(
+        "Context update took: " +
+          elapsedTime +
+          " with result " +
+          JSON.stringify(resObj),
+      );
+    } catch (error) {
+      this.hideTypingIndicator();
+      this.addErrorMessage("Sorry, I encountered an error: " + error.message);
+    } finally {
+      this.setInputEnabled(true);
+      this.messageInput.focus();
+    }
   }
 
   async sendMessage() {
@@ -142,6 +292,23 @@ class ChatApp {
       this.providerData = provObj;
       this.addProvidersOptions(provObj);
       this.addProviderList(provObj);
+    } catch (error) {
+      this.addErrorMessage("Sorry, I encountered an error: " + error.message);
+    }
+  }
+
+  async getContextJSON() {
+    try {
+      const response = await fetch("/api/v1/context", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      console.log("Adding context JSON");
+      let provObj = await response.json();
+      this.userContextData = provObj;
+      this.addContext();
     } catch (error) {
       this.addErrorMessage("Sorry, I encountered an error: " + error.message);
     }
@@ -459,4 +626,5 @@ class ChatApp {
 document.addEventListener("DOMContentLoaded", () => {
   const app = new ChatApp();
   app.getProvidersJSON();
+  app.getContextJSON();
 });

@@ -17,7 +17,43 @@
                 <p>logged in: {{current_user.display_name}}</p>
                 <p>{{current_user.full_name}}</p>
                 <div class="context-conainer">
-                    <p>Your contexts: </p>
+                    <div id="addContextItem">
+                        <h4>Add context or create. . .</h4>
+                        <label for="newContextIn">New:</label>
+                        <input id="newContextIn" name="newContextIn"></input>
+                        <br />
+                        <label for="existingContext">Or choose a context key:</label>
+                        <select id="existingContext" name="existingContext"></select>
+                        <br />
+                        <br />
+                        <label for="newContextKey">Name</label>
+                        <input id="newContextKey" name="newContextKey"></input>
+                        <br />
+                        <br />
+                        <label for="newContextVal" style="vertical-align: top;">Value</label>
+                        <textarea
+                            id="newContextVal"
+                            name="newContextVal"
+                            placeholder="Enter your context value here..."
+                            autocomplete="off"
+                            rows="3"
+                            style="resize: vertical; overflow-y: auto"
+                        ></textarea><br />
+                        <button id="contextAddButton">Add another</button>
+                        <br />
+                        <div id="newContextItems"></div>
+                        <br />
+                        <button id="contextSaveButton">Save</button>
+                        <br />
+                        <hr />
+                        <br />
+
+
+                    </div>
+                    <div id="userContext">
+
+                    </div>
+
                 </div>
             </div>
             <div class="chat-panel">

@@ -8,8 +8,9 @@ from pydantic_ai import BinaryContent
 from nada.deps import get_fastapi_agent, SessionDep
 from nada.models import AgentQuery, AgentResponse, ModelQuery, ModelProvider, UserInDB
 from nada import security
+from nada.redis.client.redis_data import KVBase
 from nada.settings import settings, templates
-
+import json
 import logging
 
 logger = logging.getLogger(__name__)
@@ -130,8 +131,13 @@ async def query_ai_agent(request: Request,
                     bin_files.append(bin_content)
     #
     history = agent_query.history
+    # save history to deafult thread
+    kv = KVBase(redis_con=SessionDep(db=settings.REDIS_DATA_DBNUM), service_prefix="thread")
+    _ = await kv.add_service_keys(service_name=current_user.username, keys=["default"], values=[json.dumps(history)])
     try:
         response, history, usage = await agent.chat(agent_query.query, bin_content=bin_files, history=history)
+        kv = KVBase(redis_con=SessionDep(db=settings.REDIS_DATA_DBNUM), service_prefix="thread")
+        _ = await kv.add_service_keys(service_name=current_user.username, keys=["default"], values=[json.dumps(history)])
         return AgentResponse(
             query=agent_query.query,
             response=response,

@@ -63,17 +63,24 @@ async def put_user_context(
         # TODO redis async and dDepends issue
         red = SessionDep(db=settings.REDIS_DATA_DBNUM)
         kv = KVBase(redis_con=red, service_prefix=f"context_{current_user.username}")
-        service_names = list(new_context.keys())
+        #service_names = list(new_context.keys())
         result = {}
-        for s_name in service_names:
-            add_keys = list(service_names.keys())
-            add_vals = list(service_names.values())
-            result[s_name] = await kv.add_service_keys(service_name=s_name, keys=add_keys, values=add_vals)
+        count = 0
+        for s_name in new_context.keys():
+            add_keys = list(new_context[s_name].keys())
+            add_vals = list(new_context[s_name].values())
+            upd_result = await kv.add_service_keys(service_name=s_name, keys=add_keys, values=add_vals)
+            if upd_result == b'OK':
+                result[s_name] = len(add_keys)
+                count += len(add_keys)
+            else:
+                result[s_name] = 0
         # return entire context back
         # service_names = await kv.get_services()
 
         # for s_name in service_names:
         #    result[s_name] = await kv.get_service_all(s_name)
+        logger.debug(f"Saved context: {count} items")
         return result
     return current_user
 
