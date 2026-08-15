@@ -277,6 +277,8 @@ class ChatApp {
   }
 
   async callAgentAPI(message) {
+    // inject modal call here
+
     let dataObj = {
       query: message,
       history: this.conversationHistory,

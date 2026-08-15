@@ -10,9 +10,16 @@
         />
     </head>
 
-    <body class="dark">
+    <body class="minimal">
         <div class="main-container">
             <!-- Left Panel: Chat Interface -->
+            <div class = "left-panel">
+                <p>logged in: {{current_user.display_name}}</p>
+                <p>{{current_user.full_name}}</p>
+                <div class="context-conainer">
+                    <p>Your contexts: </p>
+                </div>
+            </div>
             <div class="chat-panel">
                 <div class="chat-header">
                     <input type="checkbox" id="toggleAllMessages"></input>
