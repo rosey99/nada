@@ -21,13 +21,28 @@ async def root():
 
 
 @api_router.get("/providers", response_model=Dict[str, ModelProvider])
-async def json_model_providers(request: Request, providers: ProvidersDep):
+async def json_model_providers(request: Request, providers: ProvidersDep, current_user: Annotated[UserInDB, Depends(get_current_active_user)]):
     """
     Retrieve model providers and models as JSON.
 
     """
     # leaving request here for now, auth to follow
     return providers.providers
+
+
+@api_router.get("/threads", response_model=Dict[str, str])
+async def get_thread(request: Request, session: SessionDep, current_user: Annotated[UserInDB, Depends(get_current_active_user)], thread_id: str | None = None):
+    """
+    Gets a user thread. These are saved histories, with the 'default' thread saved per request
+    both before and after agent invocation automatically.
+    """
+
+    red = SessionDep(db=settings.REDIS_DATA_DBNUM)
+    kv = KVBase(redis_con=red, service_prefix="thread")
+    all_threads = await kv.get_service_all(service_name=current_user.username)
+    if thread_id:
+        return all_threads.get(thread_id) or []
+    return all_threads
 
 
 @api_router.get("/context", response_model=Dict[str, Dict[str, Any]])

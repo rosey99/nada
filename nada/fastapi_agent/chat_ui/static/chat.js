@@ -19,6 +19,7 @@ class ChatApp {
     // DOM elements
     this.providerData = null;
     this.userContextData = null;
+    this.userThreadsData = null;
     this.providersContent = document.getElementById("providersContent");
     this.providerSelector = document.getElementById("providersSelect");
     this.modelSelector = document.getElementById("modelSelect");
@@ -44,6 +45,7 @@ class ChatApp {
     this.newContextVal = document.getElementById("newContextVal");
     this.newContextItemsDiv = document.getElementById("newContextItems");
     this.userContextDiv = document.getElementById("userContext");
+    this.userThreadsDiv = document.getElementById("userThreads");
 
     this.initializeEventListeners();
     this.updateHistoryIndicator();
@@ -105,6 +107,70 @@ class ChatApp {
       : inputString;
   }
 
+  // Add threads data
+  addThreads() {
+    const pendingDiv = this.userThreadsDiv;
+    let userCont = this.userThreadsData;
+    // clear
+    Array.from(pendingDiv.children).forEach((elem) => {
+      pendingDiv.removeChild(elem);
+    });
+    const newHead = document.createElement("h4");
+    newHead.textContent = "Saved Threads";
+    pendingDiv.appendChild(newHead);
+    const newContextContent = document.createElement("div");
+    for (let pendContext in userCont) {
+      console.log("thread: " + pendContext);
+
+      newContextContent.style.padding = "5px";
+      const newTable = document.createElement("table");
+      const newRow = document.createElement("tr");
+      const newName = document.createElement("td");
+      const newVal = document.createElement("td");
+      const radioSel = document.createElement("input");
+      radioSel.type = "radio";
+      radioSel.name = "threadId";
+      radioSel.value = pendContext;
+      radioSel.addEventListener(
+        "change",
+        this.changeThread.bind(this, pendContext),
+        false,
+      );
+      newName.appendChild(radioSel);
+      newVal.textContent = pendContext;
+      newVal.style.color = "blue";
+      newRow.appendChild(newName);
+      newRow.appendChild(newVal);
+      newTable.appendChild(newRow);
+
+      newContextContent.appendChild(newTable);
+    }
+    pendingDiv.appendChild(newContextContent);
+  }
+
+  changeThread(thread_key) {
+    let userCont = this.userThreadsData;
+    let selectedThread = userCont[thread_key];
+    if (selectedThread) {
+      let newHstory = JSON.parse(selectedThread);
+      this.conversationHistory = newHstory;
+      this.clearHistory(true);
+      for (let i = 0; i < newHstory.length; i++) {
+        let thisItem = newHstory[i];
+
+        //for (let messKey in thisItem) {
+        //console.log(
+        //"hist message: " + " : " + messKey + " : " + thisItem[messKey],
+        //);
+        //let oldMessage = thisItem[messKey];
+
+        this.addMessage(thisItem.content, thisItem.role);
+        //}
+      }
+      this.updateHistoryIndicator();
+    }
+  }
+
   addContext() {
     const pendingDiv = this.userContextDiv;
     let userCont = this.userContextData;
@@ -113,16 +179,20 @@ class ChatApp {
       pendingDiv.removeChild(elem);
     });
     const newHead = document.createElement("h4");
-    newHead.textContent = "Saved Context";
+    newHead.textContent = "Saved Contexts";
     pendingDiv.appendChild(newHead);
     for (let pendContext in userCont) {
       console.log("context: " + pendContext);
       const newContextContent = document.createElement("div");
+      newContextContent.style.padding = "5px";
       const newTable = document.createElement("table");
       const newCaption = document.createElement("caption");
       newCaption.textContent = pendContext;
+      newCaption.style.textAlign = "left";
+      newCaption.style.color = "blue";
       newTable.appendChild(newCaption);
       newTable.style.captionSide = "top";
+
       const headRow = document.createElement("tr");
       const newH1 = document.createElement("th");
       newH1.textContent = "Name";
@@ -185,19 +255,10 @@ class ChatApp {
           const newVal = document.createElement("td");
           newName.textContent = contName;
           newVal.textContent = this.pendingContextObj[pendContext][contName];
-          //let keynode = document.createElement("p");
-          //let namenode = document.createElement("p");
-          //let valuenode = document.createElement("p");
           newRow.appendChild(newName);
           newRow.appendChild(newVal);
           newTable.appendChild(newRow);
-          //keynode.textContent = pendContext;
-          //namenode.textContent =
-          //  contName + ": " + this.pendingContextObj[pendContext][contName];
-          //valuenode.textContent = this.pendingContextObj[pendContext][contName];
           newContextContent.appendChild(newTable);
-          //newContextContent.appendChild(namenode);
-          //newContextContent.appendChild(valuenode);
           pendingDiv.appendChild(newContextContent);
         }
       }
@@ -207,13 +268,6 @@ class ChatApp {
   async saveContext() {
     var context = this.pendingContextObj;
     if (!context) return;
-    // let dataObj = {
-    //   query: message,
-    //   history: this.conversationHistory,
-    //   provider_slug: this.providerSelector.value,
-    //   model_id: this.modelSelector.value,
-    // };
-
     const startTime = new Date();
     try {
       const response = await fetch("/api/v1/context", {
@@ -236,6 +290,8 @@ class ChatApp {
       this.hideTypingIndicator();
       this.addErrorMessage("Sorry, I encountered an error: " + error.message);
     } finally {
+      this.getContextJSON();
+      this.addContext();
       this.setInputEnabled(true);
       this.messageInput.focus();
     }
@@ -309,6 +365,23 @@ class ChatApp {
       let provObj = await response.json();
       this.userContextData = provObj;
       this.addContext();
+    } catch (error) {
+      this.addErrorMessage("Sorry, I encountered an error: " + error.message);
+    }
+  }
+
+  async getThreadsJSON() {
+    try {
+      const response = await fetch("/api/v1/threads", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      console.log("Adding threads JSON");
+      let provObj = await response.json();
+      this.userThreadsData = provObj;
+      this.addThreads();
     } catch (error) {
       this.addErrorMessage("Sorry, I encountered an error: " + error.message);
     }
@@ -589,7 +662,7 @@ class ChatApp {
     this.updateFileList();
   }
 
-  clearHistory() {
+  clearHistory(clearAll = false) {
     // Clear chat messages
     const initialMessage =
       this.messagesContainer.querySelector(".message.assistant");
@@ -597,6 +670,9 @@ class ChatApp {
     let indexes = [];
     for (let i = 0; i < children.length; i++) {
       let checkbox = children[i].children[0];
+      if (clearAll) {
+        checkbox.checked = true;
+      }
       if (checkbox !== "undefined" && checkbox.nodeName === "INPUT") {
         if (checkbox.checked) {
           indexes.push(i);
@@ -627,4 +703,5 @@ document.addEventListener("DOMContentLoaded", () => {
   const app = new ChatApp();
   app.getProvidersJSON();
   app.getContextJSON();
+  app.getThreadsJSON();
 });
