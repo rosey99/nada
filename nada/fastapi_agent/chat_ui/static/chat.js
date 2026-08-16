@@ -20,6 +20,8 @@ class ChatApp {
     this.providerData = null;
     this.userContextData = null;
     this.userThreadsData = null;
+    this.pendingThreadsData = null;
+    this.selectedUserThread = null;
     this.providersContent = document.getElementById("providersContent");
     this.providerSelector = document.getElementById("providersSelect");
     this.modelSelector = document.getElementById("modelSelect");
@@ -137,7 +139,7 @@ class ChatApp {
         false,
       );
       newName.appendChild(radioSel);
-      newVal.textContent = pendContext;
+      newVal.textContent = userCont[pendContext].thread_name ?? "default";
       newVal.style.color = "blue";
       newRow.appendChild(newName);
       newRow.appendChild(newVal);
@@ -145,6 +147,14 @@ class ChatApp {
 
       newContextContent.appendChild(newTable);
     }
+    const addThreadButton = document.createElement("button");
+    addThreadButton.textContent = "New Thread";
+    addThreadButton.addEventListener(
+      "click",
+      this.createThread.bind(this),
+      false,
+    );
+    newContextContent.appendChild(addThreadButton);
     pendingDiv.appendChild(newContextContent);
   }
 
@@ -152,20 +162,14 @@ class ChatApp {
     let userCont = this.userThreadsData;
     let selectedThread = userCont[thread_key];
     if (selectedThread) {
-      let newHstory = JSON.parse(selectedThread);
-      this.conversationHistory = newHstory;
+      console.log("Selected thread: " + thread_key);
+      this.selectedUserThread = thread_key;
+      let newHistory = JSON.parse(selectedThread.messages);
+      this.conversationHistory = newHistory;
       this.clearHistory(true);
-      for (let i = 0; i < newHstory.length; i++) {
-        let thisItem = newHstory[i];
-
-        //for (let messKey in thisItem) {
-        //console.log(
-        //"hist message: " + " : " + messKey + " : " + thisItem[messKey],
-        //);
-        //let oldMessage = thisItem[messKey];
-
+      for (var i = 0; i < newHistory.length; i++) {
+        let thisItem = newHistory[i];
         this.addMessage(thisItem.content, thisItem.role);
-        //}
       }
       this.updateHistoryIndicator();
     }
@@ -264,7 +268,55 @@ class ChatApp {
       }
     }
   }
-
+  async createThread() {
+    //var threadsObj = this.pendingThreadsData;
+    //if (!threadsObj) return;
+    const threadNameDia = document.createElement("dialog");
+    const threadNameFrm = document.createElement("form");
+    threadNameFrm.method = "dialog";
+    const nameInput = document.createElement("input");
+    nameInput.type = "text";
+    nameInput.value = "New Thread";
+    const closeButton = document.createElement("button");
+    closeButton.addEventListener("click", () => {
+      threadNameDia.close();
+    });
+    threadNameFrm.appendChild(nameInput);
+    threadNameFrm.appendChild(closeButton);
+    threadNameDia.appendChild(threadNameFrm);
+    document.body.appendChild(threadNameDia);
+    threadNameDia.close();
+    threadNameDia.showModal();
+    let threadName = nameInput.value;
+    console.log("Got dialog data: " + threadName);
+    document.body.removeChild(threadNameDia);
+    try {
+      const response = await fetch("/api/v1/threads", {
+        method: "PATCH",
+        body: JSON.stringify({ [threadName]: [] }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      let resObj = await response.json();
+      const endTime = new Date();
+      const elapsedTime = endTime - startTime;
+      console.log(
+        "Thread update took: " +
+          elapsedTime +
+          " with result " +
+          JSON.stringify(resObj),
+      );
+    } catch (error) {
+      this.hideTypingIndicator();
+      this.addErrorMessage("Sorry, I encountered an error: " + error.message);
+    } finally {
+      this.getThreadsJSON();
+      this.addThreads();
+      this.setInputEnabled(true);
+      this.messageInput.focus();
+    }
+  }
   async saveContext() {
     var context = this.pendingContextObj;
     if (!context) return;
@@ -524,6 +576,7 @@ class ChatApp {
       history: this.conversationHistory,
       provider_slug: this.providerSelector.value,
       model_id: this.modelSelector.value,
+      thread_id: this.selectedUserThread ?? null,
     };
 
     const formData = new FormData();

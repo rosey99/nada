@@ -131,13 +131,18 @@ async def query_ai_agent(request: Request,
                     bin_files.append(bin_content)
     #
     history = agent_query.history
-    # save history to deafult thread
-    kv = KVBase(redis_con=SessionDep(db=settings.REDIS_DATA_DBNUM), service_prefix="thread")
-    _ = await kv.add_service_keys(service_name=current_user.username, keys=["default"], values=[json.dumps(history)])
+
+    thread_id = "default"
+    if agent_query.thread_id is not None:
+        thread_id = agent_query.thread_id
+
+    # save history to thread
+    kv = KVBase(redis_con=SessionDep(db=settings.REDIS_DATA_DBNUM), service_prefix=f"thread_{current_user.username}")
+    _ = await kv.add_service_keys(service_name=thread_id, keys=["messages"], values=[json.dumps(history)])
     try:
         response, history, usage = await agent.chat(agent_query.query, bin_content=bin_files, history=history)
-        kv = KVBase(redis_con=SessionDep(db=settings.REDIS_DATA_DBNUM), service_prefix="thread")
-        _ = await kv.add_service_keys(service_name=current_user.username, keys=["default"], values=[json.dumps(history)])
+        kv = KVBase(redis_con=SessionDep(db=settings.REDIS_DATA_DBNUM), service_prefix=f"thread_{current_user.username}")
+        _ = await kv.add_service_keys(service_name=thread_id, keys=["messages"], values=[json.dumps(history)])
         return AgentResponse(
             query=agent_query.query,
             response=response,

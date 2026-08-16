@@ -77,6 +77,7 @@ class AgentQuery(BaseModel):
     files: Optional[List[UploadFile]] = None
     model_id: Optional[str] = None
     provider_slug: Optional[str] = None
+    thread_id: Optional[str] = None
 
     @classmethod
     def as_string(
