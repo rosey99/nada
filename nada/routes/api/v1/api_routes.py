@@ -102,7 +102,7 @@ async def put_user_thread(
     new_threads: Dict[str, list[str]]
 ):
     """
-    Update all or part of user context
+    Update all or part of user thread history
     """
     if isinstance(current_user, UserInDB):
         # TODO redis async and dDepends issue
@@ -194,7 +194,7 @@ async def delete_user_context(
     new_context: Dict[str, Dict[str, Any]]
 ):
     """
-    Update all or part of user context
+    Delete all or part of user context
     """
     if isinstance(current_user, UserInDB):
         # TODO redis async and dDepends issue
