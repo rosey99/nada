@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 agent_router = APIRouter(prefix="/agent/v1", tags=["agent"])
 
-@agent_router.get("/login", tags=['login',], response_class=HTMLResponse)
+@agent_router.get("/login", response_class=HTMLResponse)
 async def get_login_user(request: Request): #, accept_language: str = Depends(get_accept_language)):
     #logger.debug('Got the item request')
     #logger.debug(f'Got the item request for locale: {request.headers.get("Accept-Language", None)}')
@@ -37,7 +37,7 @@ async def get_login_user(request: Request): #, accept_language: str = Depends(ge
         request=request, name="login.html", context={}
     )
 
-@agent_router.post("/login/authorize", tags=['login',], response_class=HTMLResponse)
+@agent_router.post("/login/authorize", response_class=HTMLResponse)
 async def authenticate(session: SessionDep, request: Request, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
     user = await security.authenticate_user(
         db=session, username=form_data.username, password=form_data.password
