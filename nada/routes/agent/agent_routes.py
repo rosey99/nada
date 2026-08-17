@@ -135,6 +135,7 @@ async def query_ai_agent(request: Request,
     thread_id = "default"
     if agent_query.thread_id is not None:
         thread_id = agent_query.thread_id
+    logger.info(f"Saving thread: {thread_id}")
 
     # save history to thread
     kv = KVBase(redis_con=SessionDep(db=settings.REDIS_DATA_DBNUM), service_prefix=f"thread_{current_user.username}")

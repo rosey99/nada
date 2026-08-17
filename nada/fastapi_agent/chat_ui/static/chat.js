@@ -122,7 +122,7 @@ class ChatApp {
     pendingDiv.appendChild(newHead);
     const newContextContent = document.createElement("div");
     for (let pendContext in userCont) {
-      console.log("thread: " + pendContext);
+      //console.log("thread: " + pendContext);
 
       newContextContent.style.padding = "5px";
       const newTable = document.createElement("table");
@@ -148,12 +148,29 @@ class ChatApp {
       newContextContent.appendChild(newTable);
     }
     const addThreadButton = document.createElement("button");
-    addThreadButton.textContent = "New Thread";
+    addThreadButton.textContent = "Add";
+    const remThreadButton = document.createElement("button");
+    remThreadButton.textContent = "Delete";
+    remThreadButton.disabled = true;
+    remThreadButton.id = "remThreadButton";
+    const addThreadNameIn = document.createElement("input");
+    addThreadNameIn.type = "text";
+    addThreadNameIn.value = "New Thread";
+    addThreadNameIn.id = "threadNameInput";
     addThreadButton.addEventListener(
       "click",
       this.createThread.bind(this),
       false,
     );
+    remThreadButton.addEventListener(
+      "click",
+      this.deleteThread.bind(this),
+      false,
+    );
+    newContextContent.appendChild(remThreadButton);
+    newContextContent.appendChild(document.createElement("br"));
+    newContextContent.appendChild(document.createElement("br"));
+    newContextContent.appendChild(addThreadNameIn);
     newContextContent.appendChild(addThreadButton);
     pendingDiv.appendChild(newContextContent);
   }
@@ -163,11 +180,19 @@ class ChatApp {
     let selectedThread = userCont[thread_key];
     if (selectedThread) {
       console.log("Selected thread: " + thread_key);
+      let remThreadButton = document.getElementById("remThreadButton");
+      if (thread_key === "default") {
+        remThreadButton.disabled = true;
+      } else {
+        remThreadButton.disabled = false;
+      }
       this.selectedUserThread = thread_key;
       let newHistory = JSON.parse(selectedThread.messages);
-      this.conversationHistory = newHistory;
+      // this needs to happen first
       this.clearHistory(true);
-      for (var i = 0; i < newHistory.length; i++) {
+      // set the new conversation history
+      this.conversationHistory = newHistory;
+      for (let i = 0; i < newHistory.length; i++) {
         let thisItem = newHistory[i];
         this.addMessage(thisItem.content, thisItem.role);
       }
@@ -268,28 +293,74 @@ class ChatApp {
       }
     }
   }
-  async createThread() {
+
+  createThread() {
+    let nameInput = document.getElementById("threadNameInput");
+    let threadName = nameInput.value;
+    console.log("Creating thread: " + threadName);
+    //document.body.removeChild(threadNameDia);
+    let result = this.saveThread();
+  }
+  async deleteThread() {
+    let nameInput = document.getElementById("threadNameInput");
+    let threadName = this.selectedUserThread;
+    console.log("Got delete thread data: " + threadName);
+    //document.body.removeChild(threadNameDia);
+    const startTime = new Date();
+    try {
+      const response = await fetch("/api/v1/threads", {
+        method: "DELETE",
+        body: JSON.stringify([threadName]),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      let resObj = await response.json();
+      const endTime = new Date();
+      const elapsedTime = endTime - startTime;
+      console.log(
+        "Thread delete took: " +
+          elapsedTime +
+          " with result " +
+          JSON.stringify(resObj),
+      );
+    } catch (error) {
+      this.hideTypingIndicator();
+      this.addErrorMessage("Sorry, I encountered an error: " + error.message);
+    } finally {
+      // TODO fix this, we do not need all threads
+      this.getThreadsJSON();
+      this.addThreads();
+      this.setInputEnabled(true);
+      this.messageInput.focus();
+    }
+  }
+  async saveThread() {
     //var threadsObj = this.pendingThreadsData;
     //if (!threadsObj) return;
-    const threadNameDia = document.createElement("dialog");
-    const threadNameFrm = document.createElement("form");
-    threadNameFrm.method = "dialog";
-    const nameInput = document.createElement("input");
-    nameInput.type = "text";
-    nameInput.value = "New Thread";
-    const closeButton = document.createElement("button");
-    closeButton.addEventListener("click", () => {
-      threadNameDia.close();
-    });
-    threadNameFrm.appendChild(nameInput);
-    threadNameFrm.appendChild(closeButton);
-    threadNameDia.appendChild(threadNameFrm);
-    document.body.appendChild(threadNameDia);
-    threadNameDia.close();
-    threadNameDia.showModal();
+    // const threadNameDia = document.createElement("dialog");
+    // const threadNameFrm = document.createElement("form");
+    // threadNameFrm.method = "dialog";
+    // const nameInput = document.createElement("input");
+    // nameInput.type = "text";
+    // nameInput.value = "New Thread";
+    // const closeButton = document.createElement("button");
+    // closeButton.addEventListener("click", () => {
+    //   threadNameDia.close();
+    // });
+    // threadNameFrm.appendChild(nameInput);
+    // threadNameFrm.appendChild(closeButton);
+    // threadNameDia.appendChild(threadNameFrm);
+    // document.body.appendChild(threadNameDia);
+    // threadNameDia.display = "";
+    // threadNameDia.open = true;
+    // threadNameDia.show();
+
+    let nameInput = document.getElementById("threadNameInput");
     let threadName = nameInput.value;
     console.log("Got dialog data: " + threadName);
-    document.body.removeChild(threadNameDia);
+    //document.body.removeChild(threadNameDia);
+    const startTime = new Date();
     try {
       const response = await fetch("/api/v1/threads", {
         method: "PATCH",
@@ -317,6 +388,7 @@ class ChatApp {
       this.messageInput.focus();
     }
   }
+
   async saveContext() {
     var context = this.pendingContextObj;
     if (!context) return;

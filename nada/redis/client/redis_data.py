@@ -44,11 +44,14 @@ class KVBase:
     async def delete_service(self, service_name: str):
         # first, get the keys for service
         service_keys = await self.redis.smembers(name=f'{self.prefix}:{service_name}')
+        count = 0
         if service_keys:
             try:
                 await self.redis.fcall("remove_keys", len(service_keys), *service_keys)
+                count = len(service_keys)
             except Exception as e:
                 logger.error('Service removal error: ', e)
+        return count
 
     async def get_service_all(self, service_name: str) -> Dict[str, str]:
         keys = await self.redis.smembers(f'{self.prefix}:{service_name}')

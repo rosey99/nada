@@ -1,4 +1,4 @@
-from typing import Annotated, Any, Dict
+from typing import Annotated, Any, Dict, List
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi import APIRouter, Request, Depends
 from datetime import datetime, timedelta
@@ -52,6 +52,46 @@ async def get_thread(request: Request, session: SessionDep, current_user: Annota
             result[s_name] = await kv.get_service_all(s_name)
         return result
     return current_user
+
+@api_router.delete("/threads", response_model=Dict[str, int])
+async def delete_thread(
+    request: Request,
+    session: SessionDep,
+    current_user: Annotated[UserInDB, Depends(get_current_active_user)],
+    thread_ids: List[str] ):
+    """
+    Delete one or more user threads. These are saved histories, with the 'default' thread saved per request
+    both before and after agent invocation automatically. The 'default' thread cannot be deleted here.
+    """
+    if isinstance(current_user, UserInDB):
+        red = SessionDep(db=settings.REDIS_DATA_DBNUM)
+        kv = KVBase(redis_con=red, service_prefix=f"thread_{current_user.username}")
+        service_names = await kv.get_services()  # a set()
+        real_threads = []
+        if thread_ids:
+            for thread_id in thread_ids:
+                if thread_id not in service_names:
+                    logger.info(f"Requested thread: {thread_id} does not exist")
+                    continue
+                if thread_id == "default":
+                    logger.info("Not allowed to delete default thread, skipping")
+                    continue
+                real_threads.append(thread_id)
+            if not real_threads:
+                logger.info("No threads found for deletee")
+                return {}
+            #service_names = [thread_id]
+        logger.info(f"Deleting thread(s): {thread_id}")
+        result = {}
+        #i = 0
+        for s_name in real_threads:
+           result[s_name] = 0
+           res = await kv.delete_service(s_name)
+           logger.info(f"Got delete result: {res}")
+
+        return result
+    return current_user
+
 
 @api_router.patch("/threads", response_model=Dict[str, int])
 async def put_user_context(
