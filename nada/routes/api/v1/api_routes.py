@@ -280,10 +280,6 @@ async def get_usage(session: SessionDep, current_user_name: str, since_time: flo
         if not usage_data:
             continue
 
-        elapsed_time = 0
-        model_id = None
-        provider_slug = None
-        created_time = time.time()
         top_level_names = ["elapsed_time", "model_id", "provider_slug"]
         top_args = {}
         for name in top_level_names:
