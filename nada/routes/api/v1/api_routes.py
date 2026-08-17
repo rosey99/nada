@@ -2,12 +2,16 @@ from typing import Annotated, Any, Dict, List
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi import APIRouter, Request, Depends
 from datetime import datetime, timedelta
-from nada.models import ModelProvider, Token, User, UserInDB
-from nada.deps import ProvidersDep, SessionDep, get_db
+
+from pydantic_ai import RunUsage
+
+from nada.models import ModelProvider, Token, User, UserInDB, UserUsage
+from nada.deps import ProvidersDep, SessionDep
 from nada.security import CredentialsException, authenticate_user, create_access_token, get_current_active_user
 from nada.settings import settings
-from nada.redis.client.redis_data import KVContext, KVBase, red_pool, red_con, redis
+from nada.redis.client.redis_data import KVBase
 import json
+import time
 import uuid
 
 import logging
@@ -30,6 +34,24 @@ async def json_model_providers(request: Request, providers: ProvidersDep, curren
     """
     # leaving request here for now, auth to follow
     return providers.providers
+
+
+@api_router.get("/usage", response_model=UserUsage)
+async def get_user_usage(
+    request: Request,
+    session: SessionDep,
+    current_user: Annotated[UserInDB, Depends(get_current_active_user)],
+    since_time: float | None = None) -> UserUsage:
+    """
+    Gets user usage as a list of objects.
+    """
+    if isinstance(current_user, UserInDB):
+        #red = SessionDep(db=settings.REDIS_DATA_DBNUM)
+        if not since_time:
+            since_time = time.time() - 36000  # ten hours
+        result = await get_usage(session=session, current_user_name=current_user.username, since_time=since_time)
+    return result
+
 
 
 @api_router.get("/threads", response_model=Dict[str, Dict[str, Any]])
@@ -242,3 +264,43 @@ async def read_own_items(
     current_user: Annotated[UserInDB, Depends(get_current_active_user)],
 ):
     return [{"item_id": "Foo", "owner": current_user.username}]
+
+
+async def get_usage(session: SessionDep, current_user_name: str, since_time: float) -> UserUsage:
+    red_con = session #(db=settings.REDIS_DATA_DBNUM)
+
+    r = await red_con.zrangebyscore(f"usage:{current_user_name}", min=since_time, max='+inf', withscores=True)
+    result = []
+    logger.info(f"Got usage request: {current_user_name} since {datetime.fromtimestamp(since_time).isoformat()}")
+    for k, time_stamp in r:
+        usage_data = await red_con.hgetall(k)
+        # decode?
+
+        usage_data = {k.decode(): int(v) if v.isalnum() else v.decode() for k, v in usage_data.items()}
+        if not usage_data:
+            continue
+
+        elapsed_time = 0
+        model_id = None
+        provider_slug = None
+        created_time = time.time()
+        top_level_names = ["elapsed_time", "model_id", "provider_slug"]
+        top_args = {}
+        for name in top_level_names:
+            try:
+                top_args[name] = usage_data.pop(name)
+            except KeyError:
+                top_args[name] = None
+        request_data = {'run_usage': RunUsage(**usage_data), 'created_time': time_stamp, **top_args}
+        result.append(request_data)
+    user_usage_data = UserUsage(user_id=current_user_name, from_time=since_time, usage_data=result)
+    #usage_data.pop('details')
+    #usage_data['elapsed_time'] = elapsed_time
+    #unique_key = f"usage:{current_user_name}:{usage_id}"
+    #r = await red_con.hset(unique_key, mapping=usage_data)
+    #time_score = time.time()
+
+    #_ = await red_con.zadd("usage", {unique_key: time_score})
+    #_ = await red_con.zadd(f"usage:{current_user.username}", {unique_key: time_score})
+    #_ = await red_con.zadd(unique_key, {f"{current_user.username}": time.time()})
+    return user_usage_data

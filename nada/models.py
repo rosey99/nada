@@ -8,6 +8,20 @@ from fastapi import UploadFile, Form
 
 from pydantic_ai import RunUsage
 
+class RequestUsage(BaseModel):
+    run_usage: RunUsage
+    created_time: float = Field(description="When query was recorded")
+    elapsed_time: float = Field(description="Duration of query in seconds")
+    job_id: str | None = Field(description="Workflow ID if this request is part of a workflow", default=None)
+    model_id: str | None = Field(description="Model ID", default=None)
+    provider_slug: str | None = Field(description="Provider ID", default=None)
+
+class UserUsage(BaseModel):
+    user_id: str = Field(description="Internal ID of user")
+    from_time: float = Field(description="Beginning of time period for usage")
+    usage_data: List[RequestUsage] = Field(description="List of usage observations", default_factory=list)
+
+
 class UserContext(BaseModel):
     """
     Reponse model for user k/v stores.

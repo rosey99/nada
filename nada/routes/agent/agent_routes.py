@@ -1,21 +1,27 @@
 from typing import Annotated, Optional
+from dataclasses import asdict
 from datetime import datetime, timedelta, timezone
+
+
 from fastapi import APIRouter, HTTPException, Request, UploadFile, File, Form, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from pydantic_ai import BinaryContent
+from pydantic_ai import BinaryContent, RunUsage
 
 from nada.deps import get_fastapi_agent, SessionDep
-from nada.models import AgentQuery, AgentResponse, ModelQuery, ModelProvider, UserInDB
+from nada.models import AgentQuery, AgentResponse, UserInDB, UserUsage, RequestUsage
 from nada import security
 from nada.redis.client.redis_data import KVBase
 from nada.settings import settings, templates
 import json
 import logging
+import time
+import uuid
 
 logger = logging.getLogger(__name__)
 
 agent_router = APIRouter(prefix="/agent/v1", tags=["agent"])
+
 
 @agent_router.get("/login", response_class=HTMLResponse)
 async def get_login_user(request: Request): #, accept_language: str = Depends(get_accept_language)):
@@ -141,9 +147,22 @@ async def query_ai_agent(request: Request,
     kv = KVBase(redis_con=SessionDep(db=settings.REDIS_DATA_DBNUM), service_prefix=f"thread_{current_user.username}")
     _ = await kv.add_service_keys(service_name=thread_id, keys=["messages"], values=[json.dumps(history)])
     try:
+        start_time = time.time()
         response, history, usage = await agent.chat(agent_query.query, bin_content=bin_files, history=history)
+        end_time = time.time()
         kv = KVBase(redis_con=SessionDep(db=settings.REDIS_DATA_DBNUM), service_prefix=f"thread_{current_user.username}")
         _ = await kv.add_service_keys(service_name=thread_id, keys=["messages"], values=[json.dumps(history)])
+        elapsed_time = end_time - start_time
+        usage_count = await record_usage(
+            session=SessionDep,
+            current_user=current_user,
+            usage_id=uuid.uuid4().hex,
+            usage_data=usage,
+            elapsed_time=elapsed_time,
+            model_id=agent_query.model_id,
+            provider_slug=agent_query.provider_slug
+        )
+        logger.info(f"Recorded {usage_count} usage items, elapsed time: {elapsed_time}")
         return AgentResponse(
             query=agent_query.query,
             response=response,
@@ -161,3 +180,27 @@ async def query_ai_agent(request: Request,
             error=str(e),
             history=history,
         )
+
+async def record_usage(
+    session: SessionDep,
+    current_user: UserInDB,
+    usage_id: str,
+    usage_data: RunUsage, elapsed_time: float,
+    model_id: str,
+    provider_slug: str
+):
+    red_con = session(db=settings.REDIS_DATA_DBNUM)
+
+    usage_data = asdict(usage_data)
+    usage_data.pop('details')
+    usage_data['elapsed_time'] = elapsed_time
+    usage_data['model_id'] = model_id
+    usage_data['provider_slug'] = provider_slug
+    unique_key = f"usage:{current_user.username}:{usage_id}"
+    r = await red_con.hset(unique_key, mapping=usage_data)
+    time_score = time.time()
+
+    _ = await red_con.zadd("usage", {unique_key: time_score})
+    _ = await red_con.zadd(f"usage:{current_user.username}", {unique_key: time_score})
+    #_ = await red_con.zadd(unique_key, {f"{current_user.username}": time.time()})
+    return r
