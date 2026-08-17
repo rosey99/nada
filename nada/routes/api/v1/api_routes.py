@@ -33,7 +33,7 @@ async def json_model_providers(request: Request, providers: ProvidersDep, curren
 
 
 @api_router.get("/threads", response_model=Dict[str, Dict[str, Any]])
-async def get_thread(request: Request, session: SessionDep, current_user: Annotated[UserInDB, Depends(get_current_active_user)], thread_id: str | None = None):
+async def get_user_thread(request: Request, session: SessionDep, current_user: Annotated[UserInDB, Depends(get_current_active_user)], thread_id: str | None = None):
     """
     Gets a user thread. These are saved histories, with the 'default' thread saved per request
     both before and after agent invocation automatically.
@@ -53,8 +53,9 @@ async def get_thread(request: Request, session: SessionDep, current_user: Annota
         return result
     return current_user
 
+
 @api_router.delete("/threads", response_model=Dict[str, int])
-async def delete_thread(
+async def delete_user_thread(
     request: Request,
     session: SessionDep,
     current_user: Annotated[UserInDB, Depends(get_current_active_user)],
@@ -94,7 +95,7 @@ async def delete_thread(
 
 
 @api_router.patch("/threads", response_model=Dict[str, int])
-async def put_user_context(
+async def put_user_thread(
     request: Request,
     session: SessionDep,
     current_user: Annotated[UserInDB, Depends(get_current_active_user)],
