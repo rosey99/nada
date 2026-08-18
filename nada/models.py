@@ -126,12 +126,12 @@ class LlamaArgs(BaseModel):
     """
     model_config = ConfigDict(extra='ignore')
     #
-    jinja: bool | None = Field(description="Jinja chat templates active", default=None)
+    jinja:  Optional[bool] | None = Field(description="Jinja chat templates active", default=None)
     #mmap: bool = Field(description="Memory map active", default=False)
-    temperature: float | None = Field(description="Temperature", default=None)
-    batch_size: int | None = Field(description="Batch size", default=None)
-    ctx_size: int | None = Field(description="Context size", default=None)
-    flash_attn: bool | None = Field(description="Flash attention on", default=None)
+    temperature: Optional[float] | None = Field(description="Temperature", default=None)
+    batch_size: Optional[int] | None = Field(description="Batch size", default=None)
+    ctx_size: Optional[int] | None = Field(description="Context size", default=None)
+    flash_attn: Optional[bool] | None = Field(description="Flash attention on", default=None)
 
 class ModelArchitecture(BaseModel):
     """
@@ -173,7 +173,7 @@ class LlamaModelData(BaseModelData):
     model_status: str = Field(description="Model is loaded or unloaded")
     selected: bool = Field(description="Model is selected for load and use, even if already loaded.", default=False)
     # for consistency with Openrouter standard
-    context_size: int = Field(description="Model context length.")
+    context_size: Optional[int] = Field(description="Model context length.", default=None)
     model_args: LlamaArgs
     architecture: ModelArchitecture
 
