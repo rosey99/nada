@@ -9,7 +9,7 @@ from nada.models import ModelProvider, Token, User, UserInDB, UserUsage
 from nada.deps import ProvidersDep, SessionDep
 from nada.security import CredentialsException, authenticate_user, create_access_token, get_current_active_user
 from nada.settings import settings
-from nada.redis.client.redis_data import KVBase
+from nada.redis.client.redis_data import redis, KVBase, red_pool
 import json
 import time
 import uuid
@@ -61,8 +61,9 @@ async def get_user_thread(request: Request, session: SessionDep, current_user: A
     both before and after agent invocation automatically.
     """
     if isinstance(current_user, UserInDB):
-        red = SessionDep(db=settings.REDIS_DATA_DBNUM)
-        kv = KVBase(redis_con=red, service_prefix=f"thread_{current_user.username}")
+        #red = SessionDep(db=settings.REDIS_DATA_DBNUM)
+        red_con = redis.Redis(connection_pool=red_pool)
+        kv = KVBase(redis_con=red_con, service_prefix=f"thread_{current_user.username}")
         service_names = await kv.get_services()  # a set()
         if thread_id:
             if thread_id not in service_names:
@@ -87,8 +88,9 @@ async def delete_user_thread(
     both before and after agent invocation automatically. The 'default' thread cannot be deleted here.
     """
     if isinstance(current_user, UserInDB):
-        red = SessionDep(db=settings.REDIS_DATA_DBNUM)
-        kv = KVBase(redis_con=red, service_prefix=f"thread_{current_user.username}")
+        #red = SessionDep(db=settings.REDIS_DATA_DBNUM)
+        red_con = redis.Redis(connection_pool=red_pool)
+        kv = KVBase(redis_con=red_con, service_prefix=f"thread_{current_user.username}")
         service_names = await kv.get_services()  # a set()
         real_threads = []
         if thread_ids:
@@ -128,8 +130,9 @@ async def put_user_thread(
     """
     if isinstance(current_user, UserInDB):
         # TODO redis async and dDepends issue
-        red = SessionDep(db=settings.REDIS_DATA_DBNUM)
-        kv = KVBase(redis_con=red, service_prefix=f"thread_{current_user.username}")
+        #red = SessionDep(db=settings.REDIS_DATA_DBNUM)
+        red_con = redis.Redis(connection_pool=red_pool)
+        kv = KVBase(redis_con=red_con, service_prefix=f"thread_{current_user.username}")
         #service_names = list(new_context.keys())
         result = {}
         count = 0
@@ -162,8 +165,9 @@ async def get_user_context(request: Request, session: SessionDep, current_user: 
     #
     if isinstance(current_user, UserInDB):
         # TODO redis async and dDepends issue
-        red = SessionDep(db=settings.REDIS_DATA_DBNUM)
-        kv = KVBase(redis_con=red, service_prefix=f"context_{current_user.username}")
+        #red = SessionDep(db=settings.REDIS_DATA_DBNUM)
+        red_con = redis.Redis(connection_pool=red_pool)
+        kv = KVBase(redis_con=red_con, service_prefix=f"context_{current_user.username}")
         service_names = await kv.get_services()
         result = {}
         for s_name in service_names:
@@ -184,8 +188,9 @@ async def put_user_context(
     """
     if isinstance(current_user, UserInDB):
         # TODO redis async and dDepends issue
-        red = SessionDep(db=settings.REDIS_DATA_DBNUM)
-        kv = KVBase(redis_con=red, service_prefix=f"context_{current_user.username}")
+        #red = SessionDep(db=settings.REDIS_DATA_DBNUM)
+        red_con = redis.Redis(connection_pool=red_pool)
+        kv = KVBase(redis_con=red_con, service_prefix=f"context_{current_user.username}")
         #service_names = list(new_context.keys())
         result = {}
         count = 0
@@ -220,8 +225,9 @@ async def delete_user_context(
     """
     if isinstance(current_user, UserInDB):
         # TODO redis async and dDepends issue
-        red = SessionDep(db=settings.REDIS_DATA_DBNUM)
-        kv = KVBase(redis_con=red, service_prefix=f"context_{current_user.username}")
+        #red = SessionDep(db=settings.REDIS_DATA_DBNUM)
+        red_con = redis.Redis(connection_pool=red_pool)
+        kv = KVBase(redis_con=red_con, service_prefix=f"context_{current_user.username}")
         service_names = await kv.get_services()
         new_service_names = set(new_context.keys())
         extra_names = service_names - new_service_names
@@ -267,8 +273,8 @@ async def read_own_items(
 
 
 async def get_usage(session: SessionDep, current_user_name: str, since_time: float) -> UserUsage:
-    red_con = session #(db=settings.REDIS_DATA_DBNUM)
-
+    #red_con = session #(db=settings.REDIS_DATA_DBNUM)
+    red_con = redis.Redis(connection_pool=red_pool)
     r = await red_con.zrangebyscore(f"usage:{current_user_name}", min=since_time, max='+inf', withscores=True)
     result = []
     logger.info(f"Got usage request: {current_user_name} since {datetime.fromtimestamp(since_time).isoformat()}")
@@ -289,4 +295,5 @@ async def get_usage(session: SessionDep, current_user_name: str, since_time: flo
         request_data = {'run_usage': RunUsage(**usage_data), 'created_time': time_stamp, **top_args}
         result.append(request_data)
     user_usage_data = UserUsage(user_id=current_user_name, from_time=since_time, usage_data=result)
+
     return user_usage_data

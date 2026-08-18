@@ -11,7 +11,7 @@ from pydantic_ai import BinaryContent, RunUsage
 from nada.deps import get_fastapi_agent, SessionDep
 from nada.models import AgentQuery, AgentResponse, UserInDB, UserUsage, RequestUsage
 from nada import security
-from nada.redis.client.redis_data import KVBase
+from nada.redis.client.redis_data import redis, KVBase, red_pool
 from nada.settings import settings, templates
 import json
 import logging
@@ -144,17 +144,20 @@ async def query_ai_agent(request: Request,
     logger.info(f"Saving thread: {thread_id}")
 
     # save history to thread
-    kv = KVBase(redis_con=SessionDep(db=settings.REDIS_DATA_DBNUM), service_prefix=f"thread_{current_user.username}")
+    red_con = redis.Redis(connection_pool=red_pool)
+    kv = KVBase(redis_con=red_con, service_prefix=f"thread_{current_user.username}")
     _ = await kv.add_service_keys(service_name=thread_id, keys=["messages"], values=[json.dumps(history)])
     try:
         start_time = time.time()
         response, history, usage = await agent.chat(agent_query.query, bin_content=bin_files, history=history)
         end_time = time.time()
-        kv = KVBase(redis_con=SessionDep(db=settings.REDIS_DATA_DBNUM), service_prefix=f"thread_{current_user.username}")
+        # TODO this may not be necessary, in case of time out for long requests
+        red_con = redis.Redis(connection_pool=red_pool)
+        kv = KVBase(redis_con=red_con, service_prefix=f"thread_{current_user.username}")
         _ = await kv.add_service_keys(service_name=thread_id, keys=["messages"], values=[json.dumps(history)])
         elapsed_time = end_time - start_time
         usage_count = await record_usage(
-            session=SessionDep,
+            session=red_con,
             current_user=current_user,
             usage_id=uuid.uuid4().hex,
             usage_data=usage,
@@ -173,8 +176,9 @@ async def query_ai_agent(request: Request,
     except HTTPException:
         raise
     except Exception as e:
+        raise
         return AgentResponse(
-            query=request.query,
+            query=agent_query.query,
             response="",
             status="error",
             error=str(e),
@@ -182,21 +186,28 @@ async def query_ai_agent(request: Request,
         )
 
 async def record_usage(
-    session: SessionDep,
+    session: redis,
     current_user: UserInDB,
     usage_id: str,
     usage_data: RunUsage, elapsed_time: float,
     model_id: str,
     provider_slug: str
 ):
-    red_con = session(db=settings.REDIS_DATA_DBNUM)
+    red_con = session #(db=settings.REDIS_DATA_DBNUM)
 
     usage_data = asdict(usage_data)
+
+    # TODO this is messy, but upstream changes in RunUsage
+    #  which permit None for certain stats break redis
+    #  likewise for 'details' which would require serialization
+    #  this needs its own dedicated model to auto ignore/coerce values
     usage_data.pop('details')
+    usage_data = {k: 0 if v is None else v for k, v in usage_data.items()}
     usage_data['elapsed_time'] = elapsed_time
     usage_data['model_id'] = model_id
     usage_data['provider_slug'] = provider_slug
     unique_key = f"usage:{current_user.username}:{usage_id}"
+    logger.info(f"Usage data: {usage_data}")
     r = await red_con.hset(unique_key, mapping=usage_data)
     time_score = time.time()
 

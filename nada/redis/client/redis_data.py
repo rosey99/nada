@@ -18,6 +18,8 @@ print(REDIS_DATA_DBNUM)
 red_con = redis.Redis(host=REDIS_DATA_HOST,
                       port=REDIS_DATA_PORT,
                       db=REDIS_DATA_DBNUM,
+                      username=settings.REDIS_DATA_USER,
+                      password=settings.REDIS_DATA_PASSWORD,
                       max_connections=10)
 
 
@@ -25,6 +27,8 @@ red_pool = redis.ConnectionPool(
     host=REDIS_DATA_HOST,
     port=REDIS_DATA_PORT,
     db=REDIS_DATA_DBNUM,
+    username=settings.REDIS_DATA_USER,
+    password=settings.REDIS_DATA_PASSWORD,
     max_connections=10
 )
 

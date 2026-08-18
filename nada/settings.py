@@ -89,9 +89,13 @@ class Settings(BaseSettings):
     REDIS_CACHE_HOST: str
     REDIS_CACHE_PORT: int
     REDIS_CACHE_DBNUM: int
+    REDIS_CACHE_USER: str = 'nada_data'
+    REDIS_CACHE_PASSWORD: str = 'changethis123'
     REDIS_DATA_HOST: str
     REDIS_DATA_PORT: int
     REDIS_DATA_DBNUM: int
+    REDIS_DATA_USER: str = 'nada_data'
+    REDIS_DATA_PASSWORD: str = 'changethis123'
     # providers
     PROVIDER_CONFIG_PATH: str
     PROVIDER_DEFAULT: str | None = None
