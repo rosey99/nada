@@ -3,17 +3,16 @@
 A distributed async agent orchestration system built with Docker, Python, FastAPI, Pydantic AI, and Celery. Essentially a research project, and absolutely not ready for prime time. Here nonetheless as it might be helpful to others who are interested in evaluating (in particular) open source LLMs, agent frameworks, and LLM orchestration/performance. At the moment, only OpenAI compatible (Llama.cpp, Ollama, etc.) providers, along with Openrouter are supported.
 
 ## 🚀 Overview
-Essentially a fork (with gratitude!) of https://github.com/blairhudson/fastapi-agents, repurposed as an agent and LLM orchestration tool. Built to provide a sufficiently powerful agent that is not confined to either a console or an IDE, and that can offload long-running workloads to a lightweight async worker pool. More capabilities are coming (soon) with truly async execution, multi-step planning, Redis for cache, memory, and semantic search, as well as comprehensive LLM/agent metrics.    
+Essentially a fork (with gratitude!) of https://github.com/blairhudson/fastapi-agents, repurposed as an agent and LLM orchestration tool. Built to provide a sufficiently powerful agent that is not confined to either a console or an IDE, and that can offload long-running workloads to a lightweight async worker pool. More capabilities are coming (soon) with truly async execution, multi-step planning, Redis for cache, memory, and semantic search, as well as comprehensive LLM/agent metrics.
 
-Nada is a framework for building and managing AI agents that can interact with FastAPI applications and perform various tasks including web search, file system operations, and API calls (so far), using the Pydantic AI capabilities system. 
+Nada is a framework for building and managing AI agents that can interact with FastAPI applications and perform various tasks including web search, file system operations, and API calls (so far), using the Pydantic AI capabilities system.
 
 Basically a test harness at this point, built to test the proposition that the app could then be used to generate usable code for itself. And to benchmark results and performance for various (small-ish) open source models, for actual day-to-day development work. Certain pieces, including this document, are the work of Qwen3.5 4B running on an old laptop. Totally sufficient for many tasks and agent tools, IMHO.
-
 
 ## 📋 Features
 
 - **AI Agent Orchestration**: Built-in support for Pydantic AI and FastAPI integration
-- **Distributed Task Processing**: Celery-based async task queue with Redis support (roadmap)
+- **Distributed Task Processing**: Celery-based async task queue with Redis support
 - **FastAPI Integration**: Seamless API interaction with AI agents
 - **Multiple LLM Providers**: Support for local Llama models (via OpenAI-compatible APIs), OpenRouter, and more
 - **Tool Integration**: Web search, file system access, shell execution, task planning, Telegram notifications
@@ -21,16 +20,18 @@ Basically a test harness at this point, built to test the proposition that the a
 - **Chat Interface**: Built-in web UI for agent interaction (agent-generated and original)
 - **Redis Integration**: Redis-backed session management, caching, and Lua script support
 - **API Discovery**: Automatic FastAPI route discovery and documentation for agent context
+- **User Authentication**: JWT-based authentication with password hashing
 
 ## 🏗️ Project Structure
 
 ```
 nada/
-├── __init__.py              # Package initialization
+├── __init__.py              # Package initialization (PARENT_DIR_PATH, ROOT_DIR_PATH)
 ├── main.py                  # FastAPI application entry point
 ├── deps.py                  # Dependency injection (Redis, Agent, Providers)
 ├── models.py                # Pydantic model definitions
 ├── settings.py              # Application settings (env-based)
+├── security.py              # Security utilities (JWT, password hashing)
 ├── simple_agent.py          # Standalone interactive agent example
 ├── celery/                  # Celery task integration
 │   ├── __init__.py
@@ -46,13 +47,16 @@ nada/
 │   │   ├── base_agent.py    # Base agent class (ABC)
 │   │   └── pydantic_ai.py   # Pydantic AI agent implementation
 │   └── chat_ui/             # Web chat interface
-│       ├── index.html
-│       ├── chat.js
-│       ├── script.js
-│       ├── styles.css
-│       ├── new_style.css
+│       ├── static/
+│       │   ├── index.html
+│       │   ├── chat.js
+│       │   ├── script.js
+│       │   ├── styles.css
+│       │   └── new_style.css
 │       └── templates/
-│           └── index.html
+│           ├── base.html
+│           ├── index.html
+│           └── login.html
 ├── llm/                     # LLM integration
 │   ├── __init__.py
 │   ├── common/
@@ -81,18 +85,32 @@ nada/
 │           └── api_routes.py # API v1 endpoints
 └── tools/                   # Tool implementations
     ├── __init__.py
-    ├── planner.py           # Task planning tools (roadmap)
-    └── telegram.py          # Telegram notification tool (roadmap)
+    ├── planner.py           # Task planning tools
+    └── telegram.py          # Telegram notification tool
 ```
 
 ## 🛠️ Requirements
 
 - Python 3.11+
 - Redis (for Celery, caching, and session management)
-- FastAPI 0.139.0+
+
+### Core Dependencies
+
 - Celery 5.6.3+
-- Pydantic AI 2.9.0+ (pydantic-ai-slim with openai, openrouter, duckduckgo, web-fetch, mcp extras)
 - Gevent 26.5.0+
+- Redis 8.0.0+
+- Dogpile.cache 1.5.0+
+- python-dotenv 0.9.9+
+- pydantic-ai-slim[openai,openrouter,duckduckgo,web-fetch,mcp] 2.9.0+
+- pydantic-ai-harness 0.6.0+
+- FastAPI 0.139.0+
+- Jinja2 3.1.6+
+- python-magic 0.4.0+
+- markitdown 0.1.6+
+- PyJWT 1.4.0+
+- bcrypt 5.0.0+
+- python-slugify 8.0.4+
+- pwdlib[argon2] 0.3.1+
 
 ### Development Dependencies
 
@@ -117,9 +135,25 @@ pip install -e .
 pip install -e ".[dev]"
 ```
 
+### Docker Setup
+
+Build the Docker image:
+
+```bash
+docker build -t nada .
+```
+
+Or use Docker Compose:
+
+```bash
+docker compose -f container-compose.yml up
+```
+
 ## 🔧 Configuration
 
-Create a `.env` file in the project root:
+### Environment Variables
+
+Create a `.env` file in the project root (one level above `nada/`):
 
 ```env
 # Celery Configuration
@@ -158,7 +192,9 @@ SMTP_SSL=false
 SMTP_PORT=587
 ```
 
-Additionally, create a `providers.json` file (path configured via `PROVIDER_CONFIG_PATH`) with LLM provider definitions:
+### Provider Configuration
+
+Create a `providers.json` file (path configured via `PROVIDER_CONFIG_PATH`) with LLM provider definitions:
 
 ```json
 [
@@ -185,6 +221,49 @@ Additionally, create a `providers.json` file (path configured via `PROVIDER_CONF
 ]
 ```
 
+### Docker Compose Configuration
+
+The `container-compose.yml` defines three services:
+
+1. **celery-worker-pool** - Celery worker with gevent pool
+2. **fastapi_agent** - FastAPI application with chat UI
+3. **redis-db** - Redis database with ACL-based authentication
+
+Required environment variables for Docker Compose:
+
+```env
+# Redis connection
+REDIS_DATA_HOST=redis-db
+REDIS_DATA_PORT=6389
+REDIS_DATA_DBNUM=
+REDIS_DATA_USER=nada_data
+REDIS_DATA_PASSWORD=changethis123
+
+REDIS_CACHE_HOST=redis-db
+REDIS_CACHE_PORT=6389
+REDIS_CACHE_DBNUM=
+REDIS_CACHE_USER=nada_data
+REDIS_CACHE_PASSWORD=changethis123
+
+CELERY_REDIS_USER=
+CELERY_REDIS_PASSWORD=
+
+# LLM provider
+PROVIDER_DEFAULT=
+PROVIDER_MODEL_DEFAULT=
+OPENROUTER_API_KEY=
+
+# Paths
+NADA_HOME_DEFAULT=
+NADA_GLOBAL_READ=
+REDIS_PERSIST_DIR=
+
+# Optional
+DB_CONNECTION_URI=
+APP_DB_CONNECTION_URI=
+GH_TOKEN=
+```
+
 ## 🎯 Usage
 
 ### Running the Simple Agent
@@ -201,7 +280,7 @@ This starts an interactive agent session with:
 
 ### Running with FastAPI
 
-Install a python venv with the project dependencies and update LLM provider configuration (in `providers.json` and `.env`). Then:
+Install a Python venv with the project dependencies and update LLM provider configuration (in `providers.json` and `.env`). Then:
 
 ```bash
 uvicorn nada.main:app --host 0.0.0.0 --port 8000
@@ -210,7 +289,7 @@ uvicorn nada.main:app --host 0.0.0.0 --port 8000
 Or using the Docker Compose setup:
 
 ```bash
-docker-compose -f container-compose.yml up
+docker compose -f container-compose.yml up
 ```
 
 Access the chat interface at: `http://localhost:8000/agent/v1/chat`
