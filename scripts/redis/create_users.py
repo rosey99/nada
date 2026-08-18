@@ -9,11 +9,14 @@ from nada.models import User
 from nada.security import create_user
 from nada.settings import settings
 
+import argparse
 
 import logging
 logging.basicConfig(level=logging.INFO, handlers=[logging.StreamHandler()])
+logger = logging.getLogger(__name__)
 
-async def create_users(users: Union[List[User], User]):
+
+async def create_users(users: Union[List[User], User], port=6379):
     """
     create one or more users
     """
@@ -22,20 +25,39 @@ async def create_users(users: Union[List[User], User]):
         users = [users]
     for user in users:
         passw = user.pop("password")
-        _ = await create_user(db=SessionDep(db=settings.REDIS_DATA_DBNUM), user_data=user, password=passw)
+        _ = await create_user(db=SessionDep(db=settings.REDIS_DATA_DBNUM, port=port), user_data=user, password=passw)
         i += 1
     return i
 
 def main():
     """
     Takes a single optional json file path for users to create,
-    or drops to a terminal.
+    or drops to a terminal. Optionally an overide port can be specified.
     """
+
+    required_names = {
+        "username": "",
+        "display_name": "",
+        "email": "",
+        "full_name": "",
+        "is_active": " (0/1)",
+        "is_superuser": " (0/1)",
+        "password": "",
+    }
+
+    parser = argparse.ArgumentParser(
+        description=f"Adds one or more users either interactively via a terminal or from a local json file. \n{'\nRequired fields: ' + '\n'.join([name for name in required_names])}",  # Capitalized + period
+        epilog="Example: python create_users.py --path users.json --port 6389"
+    )
+    parser.add_argument("--port", action="store", help="specify redis port, by default 6389 for container and 6379 for local")
+    parser.add_argument("--path", action="store", help="specify path to JSON file with users and passwords for loading, see")
+    args = parser.parse_args()
+
     users = []
-    if len(sys.argv) > 1:
+    if args.path:
         # open a file
         try:
-            with open(sys.argv[1], 'r') as file:
+            with open(args.path, 'r') as file:
                 _users = file.read()
                 _users = json.loads(_users)
                 for u in _users:
@@ -55,16 +77,6 @@ def main():
             if not pass1 == pass2:
                 return
             return pass1
-
-        required_names = {
-            "username": "",
-            "display_name": "",
-            "email": "",
-            "full_name": "",
-            "is_active": " (0/1)",
-            "is_superuser": " (0/1)",
-            "password": "",
-        }
 
         quit = False
         while not quit:
@@ -101,7 +113,12 @@ def main():
             if do_more in ('n', 'no'):
                 break
     if users:
-        return asyncio.run(create_users(users))
+        if args.port:
+            port = int(args.port)
+            logger.info(f"Overide port: {port}")
+        else:
+            port = settings.REDIS_DATA_PORT
+        return asyncio.run(create_users(users, port=port))
     else:
         print("No users to create")
 
