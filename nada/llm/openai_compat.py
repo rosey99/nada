@@ -55,10 +55,10 @@ def get_available_llama_models(provider: ModelProvider) -> ModelProvider:
                     new_args[key] = args[next] if next < argcount \
                     and not args[next].startswith(arg_prefix) else True
         except KeyError as e:
-            logger.error(f'A parsing error occured: \n{str(e)}')
+            logger.error(f'A provider arguments parsing error occured: \n{str(e)}')
         except Exception as e:
-            logger.error(f'An exit error occured: \n{str(e)}')
-            raise  # reraise
+            logger.exception(f'Unable to parse provider runtime args: {str(e)}')
+            #raise  # reraise
         args_obj = LlamaArgs(**new_args)
         model_obj = LlamaModelData(model_status=status,
             context_size=args_obj.ctx_size,

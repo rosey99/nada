@@ -88,6 +88,9 @@ async def query_ai_agent(request: Request,
     """
     if isinstance(current_user, security.CredentialsException) or current_user is None:
         raise security.CredentialsException
+    if not isinstance(current_user, UserInDB):
+        return current_user
+
     agent = get_fastapi_agent(app=request.app, agent_query=agent_query)
     # TODO session test for persistence dep
     #   and file handling

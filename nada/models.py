@@ -121,16 +121,17 @@ class ModelQuery(BaseModel):
 
 class LlamaArgs(BaseModel):
     """
-    Static configuration data
+    Static configuration data.
+    Make all of these optional as this is backend setup dependent.
     """
     model_config = ConfigDict(extra='ignore')
     #
-    jinja: bool = Field(description="Jinja chat templates active")
+    jinja: bool | None = Field(description="Jinja chat templates active", default=None)
     #mmap: bool = Field(description="Memory map active", default=False)
-    temperature: float = Field(description="Temperature")
-    batch_size: int = Field(description="Batch size")
-    ctx_size: int = Field(description="Context size")
-    flash_attn: bool = Field(description="Flash attention on")
+    temperature: float | None = Field(description="Temperature", default=None)
+    batch_size: int | None = Field(description="Batch size", default=None)
+    ctx_size: int | None = Field(description="Context size", default=None)
+    flash_attn: bool | None = Field(description="Flash attention on", default=None)
 
 class ModelArchitecture(BaseModel):
     """
