@@ -123,7 +123,7 @@ async def put_user_thread(
     request: Request,
     session: SessionDep,
     current_user: Annotated[UserInDB, Depends(get_current_active_user)],
-    new_threads: Dict[str, list[str]]
+    new_threads: Dict[str, List[Dict[str, str]]]
 ):
     """
     Update all or part of user thread history

@@ -5,12 +5,12 @@ from typing import List, Optional
 
 #from langchain.tools import tool, BaseTool
 from pydantic import BaseModel, Field
-from pydantic_ai_harness.experimental.planning import Planning, PlanItem, PlanningToolset
+#from pydantic_ai_harness.experimental.planning import Planning, PlanningToolset
 
 class PlanStep(BaseModel):
 
-    index: int = Field(
-        description="Numerical index of this PlanStep. Index begins at 1 and increments by 1 for each PlanStep. ",
+    job_id: str = Field(
+        description="JobID assigned by dispatcher. Used for aggregating results, identical for each step.",
         gt=0
     )
     prompt: str = Field(
@@ -22,18 +22,31 @@ class PlanStep(BaseModel):
                     "Only use tool names that are available in your tool listing."
     )
     parallel: bool = Field(
-        description="Whether the step can be executed concurrently with adjacent PlanSteps."
+        description="Whether the step can be executed concurrently with adjacent PlanSteps. Only following steps "
+                    "with parallel = True will be executed concurrently with this step, until parallel = False is encountered",
+        default=False
     )
-    child_steps: Optional[List['PlanStep']] = Field(
-        description="Additional PlanSteps that should execute following completion of this PlanStep."
+    tags: Optional[List[str]] | None = Field(
+        description="Optional list of tags, used by router.",
+        default=None
     )
+    # child_steps: Optional[List['PlanStep']] = Field(
+    #     description="Additional PlanSteps that should execute following completion of this PlanStep."
+    # )
 
 # TODO is this deprecated? No warnings
-PlanStep.update_forward_refs()
+#PlanStep.update_forward_refs()
+class PlanStepResult(BaseModel):
+    pass
+
 
 class Plan(BaseModel):
 
     steps: List[PlanStep] = Field(
-        description="Sequential list of steps to be attempted in order of PlanStep index."
+        description="Sequential list of steps to be attempted in order."
                     "At least 1 step is required."
+    )
+    results: Optional[List[PlanStepResult]] = Field(
+        description="List of results, may be empty.",
+        default_factory=list
     )

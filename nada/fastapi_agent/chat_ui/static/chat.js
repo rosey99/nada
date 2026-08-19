@@ -364,7 +364,7 @@ class ChatApp {
     try {
       const response = await fetch("/api/v1/threads", {
         method: "PATCH",
-        body: JSON.stringify({ [threadName]: [] }),
+        body: JSON.stringify({ [threadName]: this.conversationHistory }),
         headers: {
           "Content-Type": "application/json",
         },
