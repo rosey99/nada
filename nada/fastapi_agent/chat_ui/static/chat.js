@@ -518,12 +518,13 @@ class ChatApp {
       for (let provKey in this.providerData) {
         if (provKey != provID) {
           this.providerData[provKey].is_active = false;
-          console.log("Deactivating provider key: " + provID + " " + provKey);
+          console.log("Deactivating provider key: " + provKey);
         } else {
           this.providerData[provKey].is_active = true;
-          console.log("Activating provider key: " + provID + " " + provKey);
+          console.log("Activating provider key: " + provKey);
         }
       }
+      this.addProvidersOptions(this.providerData);
     }
   }
 
