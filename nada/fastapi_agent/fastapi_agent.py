@@ -6,13 +6,13 @@ from typing import Any, Dict, List, Optional, Union
 from fastapi import APIRouter, Depends, FastAPI, Header, HTTPException, UploadFile
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
-from pydantic_ai import RunContext, RunUsage
+from pydantic_ai import RunContext, RunUsage, BinaryContent
 from pydantic_ai.models import Model
 
 from nada.fastapi_agent.agents import AIAgent
 from nada.fastapi_agent.fastapi_discovery import FastAPIDiscovery
 from nada.llm.common.provider import ProviderCollection
-from nada.models import APIResponse
+from nada.models import APIResponse, BaseModelData
 
 
 class FastAPIAgent(FastAPIDiscovery):
@@ -20,6 +20,7 @@ class FastAPIAgent(FastAPIDiscovery):
         self,
         app: FastAPI,
         providers: ProviderCollection,
+        model_data: BaseModelData,
         base_url: str = "http://localhost:8000",
         auth: Optional[dict] = None,
         ignore_routes: Optional[list] = None,
@@ -66,6 +67,7 @@ class FastAPIAgent(FastAPIDiscovery):
         )
 
         self.model = model
+        self.model_data = model_data
         self.agent_provider = agent_provider
 
         self.verify_api_call = kwargs.get("verify_api_call", True)
@@ -92,6 +94,7 @@ class FastAPIAgent(FastAPIDiscovery):
     def get_ai_assistant(self, **kwargs):
         assistant = AIAgent.create(
             self.model,
+            model_data=self.model_data,
             prompt=self.get_system_prompt(),
             provider=self.agent_provider,
             logger=self.logger,
@@ -160,10 +163,10 @@ class FastAPIAgent(FastAPIDiscovery):
 
         return 'You are a helpful and concise assistant.'
 
-    async def chat(self, user_input: str, history: Optional[list] = None):
+    async def chat(self, user_input: str, bin_content: Optional[List[BinaryContent]] = None, history: Optional[list[str]] = None):
         if not history:
             history = []
-        result, history, usage = await self.assistant.chat(user_input, history)
+        result, history, usage = await self.assistant.chat(message=user_input, bin_content=bin_content, history=history)
         return result, history, usage
 
     # def fix_cors(self):

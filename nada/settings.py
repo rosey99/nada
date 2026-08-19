@@ -2,6 +2,7 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from fastapi.templating import Jinja2Templates
+from slugify import slugify
 
 from nada import PARENT_DIR_PATH, ROOT_DIR_PATH
 
@@ -32,7 +33,7 @@ def load_providers():
     selected_model = None
     if settings.PROVIDER_DEFAULT:
         try:
-            def_provider = providers.providers[settings.PROVIDER_DEFAULT]
+            def_provider = providers.providers[slugify(settings.PROVIDER_DEFAULT)]
         except KeyError:
             raise RuntimeError(f"Invalid default provider: {settings.PROVIDER_DEFAULT}, verify provider configuration at {config_path}")
         if len(def_provider.models) > 0:  # provider is offline
@@ -40,13 +41,14 @@ def load_providers():
             selected_provider.is_active = True
             if settings.PROVIDER_MODEL_DEFAULT:
                 # TODO, once again. . .make this a dict
-                for model in selected_provider.models:
-                    if model.id == settings.PROVIDER_MODEL_DEFAULT:
+                for mod_id, model in selected_provider.models.items():
+                    if mod_id == settings.PROVIDER_MODEL_DEFAULT:
                         model.selected = True
-                        selected_model = model.id
+                        selected_model = mod_id
             else:
                 # get the first model
-                selected_model = selected_provider.models[0]
+                mod_id = list(selected_provider.models.keys())[0]
+                selected_model = selected_provider.models[mod_id]
                 print(f"Selected first available model for provider {settings.PROVIDER_DEFAULT}")
         else:
             # TODO add logging
@@ -68,21 +70,32 @@ def load_providers():
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        # Use top level .env file (one level above ./backend/)
-        env_file='.env',
+        # Use top level .env file (one level above ./nada/)
+        #  ignored in default compose/docker setup
+        #  which uses env vars instead
+        env_file= ROOT_DIR_PATH + '/.env',
         env_ignore_empty=True,
         extra="ignore",
     )
     log_level: str = Field(default="info", description="Logging level")
-    #model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    DEFAULT_TENANT: str = "nada"
+    COOKIE_NAME: str = "access_token"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    SECRET_KEY: str = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
+    ALGORITHM: str = 'HS256'
+    #
     CELERY_RESULT_URI: str
     CELERY_BROKER_URI: str
     REDIS_CACHE_HOST: str
     REDIS_CACHE_PORT: int
     REDIS_CACHE_DBNUM: int
+    REDIS_CACHE_USER: str = 'nada_data'
+    REDIS_CACHE_PASSWORD: str = 'changethis123'
     REDIS_DATA_HOST: str
     REDIS_DATA_PORT: int
     REDIS_DATA_DBNUM: int
+    REDIS_DATA_USER: str = 'nada_data'
+    REDIS_DATA_PASSWORD: str = 'changethis123'
     # providers
     PROVIDER_CONFIG_PATH: str
     PROVIDER_DEFAULT: str | None = None

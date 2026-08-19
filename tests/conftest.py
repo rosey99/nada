@@ -36,3 +36,28 @@ async def redis_client():
 def kvstore(redis_client: redis_client):
     """A KVBase instance backed by the test Redis client."""
     return KVBase(redis_con=redis_client, service_prefix="test_svc")
+
+# for later
+test_user = {
+        "username": "johndoe",
+        "full_name": "John Doe",
+        "email": "johndoe@example.com",
+        "disabled": 0,
+        "display_name": "Jdoe99",
+        "is_active": 1,
+        "is_superuser": 0
+    }
+
+test_password = "test123"
+
+test_super_user = {
+        "username": "joedoe",
+        "full_name": "Joe Doe",
+        "email": "joedoe@example.com",
+        "disabled": 0,
+        "display_name": "Joedoe99",
+        "is_active": 1,
+        "is_superuser": 1
+    }
+
+test_super_password = "123test"

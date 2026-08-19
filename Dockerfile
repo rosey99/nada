@@ -59,10 +59,10 @@ COPY pyproject.toml requirements.txt $PROVIDER_CONFIG_PATH ./
 #RUN --mount=type=ssh pip install .
 RUN pip install -r requirements.txt
 
-COPY nada ./nada
+COPY nada/ /nada/
 # TODO when original static UI and endpoint are deprecated
 #  this can lose the -e flag
-RUN pip install --no-deps --no-cache-dir -e .
+RUN pip install --no-deps --no-cache-dir .
 
 # Remove the build deps
 RUN apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false $BUILD_DEPS \

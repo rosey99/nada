@@ -5,6 +5,8 @@ from pydantic_ai.models import Model as PydanticAIModel
 
 from .pydantic_ai import PydanticAIAgent
 
+from nada.models import BaseModelData
+
 __all__ = ["AIAgent", "PydanticAIAgent"]
 
 DEFAULT_PROMPT = """
@@ -35,6 +37,8 @@ class AIAgent:
     def create(
         cls,
         model: Any,
+        model_data: BaseModelData,
+        # TODO do something about this, move out to config/yaml for V3
         prompt: Optional[str] = DEFAULT_PROMPT,
         provider: str = "pydantic_ai",
         logger: Optional[logging.Logger] = None,
@@ -45,9 +49,9 @@ class AIAgent:
         #print('tools: ', tools)
         if provider == "pydantic_ai":
             if isinstance(model, PydanticAIModel):
-                return PydanticAIAgent(prompt=prompt, model=model, logger=logger, tools=tools, capabilities=capabilities)
-            elif isinstance(model, str):
-                return PydanticAIAgent(prompt=prompt, model_name=model, logger=logger, tools=tools, capabilities=capabilities)
+                return PydanticAIAgent(prompt=prompt, model=model, model_data=model_data, logger=logger, tools=tools, capabilities=capabilities)
+            # elif isinstance(model, str):
+            #     return PydanticAIAgent(prompt=prompt, model_name=model, logger=logger, tools=tools, capabilities=capabilities)
             else:
                 raise ModelTypeNotSupported(f"Provider {provider} not support model type: {type(model)}")
 

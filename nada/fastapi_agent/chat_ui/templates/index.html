@@ -10,9 +10,55 @@
         />
     </head>
 
-    <body class="dark">
+    <body class="minimal">
         <div class="main-container">
             <!-- Left Panel: Chat Interface -->
+            <div class = "left-panel">
+                <p>logged in: {{current_user.display_name}}</p>
+                <p>{{current_user.full_name}}</p>
+                <div class="context-conainer">
+                    <div id="addContextItem">
+                        <h4>Add context or create. . .</h4>
+                        <label for="newContextIn">New:</label>
+                        <input id="newContextIn" name="newContextIn"></input>
+                        <br />
+                        <label for="existingContext">Or choose a context key:</label>
+                        <select id="existingContext" name="existingContext"></select>
+                        <br />
+                        <br />
+                        <label for="newContextKey">Name</label>
+                        <input id="newContextKey" name="newContextKey"></input>
+                        <br />
+                        <br />
+                        <label for="newContextVal" style="vertical-align: top;">Value</label>
+                        <textarea
+                            id="newContextVal"
+                            name="newContextVal"
+                            placeholder="Enter your context value here..."
+                            autocomplete="off"
+                            rows="3"
+                            style="resize: vertical; overflow-y: auto"
+                        ></textarea><br />
+                        <button id="contextAddButton">Add another</button>
+                        <br />
+                        <div id="newContextItems"></div>
+                        <br />
+                        <button id="contextSaveButton">Save</button>
+                        <br />
+                        <hr />
+                        <br />
+
+
+                    </div>
+                    <div id="userContext">
+
+                    </div>
+                    <div id="userThreads">
+
+                    </div>
+
+                </div>
+            </div>
             <div class="chat-panel">
                 <div class="chat-header">
                     <input type="checkbox" id="toggleAllMessages"></input>
@@ -62,28 +108,29 @@
 
                 <div class="chat-input">
                     <div class="input-container">
-                        <input
-                            type="file"
-                            id="fileInput"
-                            style="display: none"
-                        />
-                        <button
-                            title="Attach file..."
-                            onclick="
-                                document.getElementById('fileInput').click()
-                            "
-                        >
-                            <svg
-                                width="24"
-                                height="24"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                            >
-                                <path d="M12 5v14M5 12l7 7 7-7" />
-                            </svg>
-                        </button>
+                        <div id="file-container">
+                            <form id="fileUpload" name="fileUpload">
+                                <input
+                                    type="file"
+                                    id="fileInput"
+                                    style="display: none" multiple
+                                />
+                            </form>
+                            <button title="Attach file..." id="attachButton">
+                                <svg
+                                    width="24"
+                                    height="24"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                >
+                                    <path d="M12 5v14M5 12l7 7 7-7" />
+                                </svg>
+                            </button>
+                        </div>
+
+
                         <textarea
                             id="messageInput"
                             placeholder="Type your message here..."
@@ -105,6 +152,9 @@
                             </svg>
                         </button>
                     </div>
+                </div>
+                <div id="fileListing">
+
                 </div>
             </div>
 
@@ -139,8 +189,8 @@
                     <div id="queryMetrics" class="metrics-message"></div>
                 </div>
             </div>
-        </div>
 
+        </div>
         <script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script>
 
         <script src="{{ url_for('static', path='/chat.js') }}"></script>

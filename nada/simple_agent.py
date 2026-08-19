@@ -5,7 +5,7 @@ import time
 
 from prompt_toolkit import PromptSession
 #from prompt_toolkit.patch_stdout import patch_stdout
-
+from slugify import slugify
 
 from pydantic_ai import Agent
 
@@ -64,13 +64,14 @@ def main() -> None:
 
     # modifies in place and returns
     providers.refresh_provider()
-    provider = providers.providers['Local Llama LTV']
+    provider_slug = slugify('Local Llama LTV')
+    provider = providers.providers[provider_slug]
 
     use_model = None
-    for model in provider.models:
+    for model_id in provider.models:
         # get the loaded model
-        if model.model_status == 'loaded':
-            use_model = provider.get_model(model.id, provider)
+        if provider.models[model_id].model_status == 'loaded':
+            use_model = provider.get_model(model_id, provider)
             #print('Found loaded model: ', model.id, model.model_status)
             #print(f'Context: {model.context_size}')
     if not use_model:
