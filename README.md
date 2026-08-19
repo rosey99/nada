@@ -149,6 +149,18 @@ Or use Docker Compose:
 docker compose -f container-compose.yml up
 ```
 
+### Creating Users
+
+After installation, you can create users using the included script. See [CREATE_USER.md](./CREATE_USER.md) for detailed instructions.
+
+```bash
+# Interactive mode
+python -m nada.scripts.user.create_users
+
+# From a JSON file
+python -m nada.scripts.user.create_users --path users.json
+```
+
 ## 🔧 Configuration
 
 ### Environment Variables
