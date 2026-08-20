@@ -27,7 +27,6 @@ class ChatApp {
     this.modelSelector = document.getElementById("modelSelect");
     this.metricsContainer = document.getElementById("queryMetrics");
     this.providersList = document.getElementById("providersList");
-    this.providerContent = document.getElementById("providersContent");
     this.outputSpan = document.getElementById("outputSpan");
     this.inputSpan = document.getElementById("inputSpan");
     this.messagesContainer = document.getElementById("chatMessages");
@@ -336,26 +335,6 @@ class ChatApp {
     }
   }
   async saveThread() {
-    //var threadsObj = this.pendingThreadsData;
-    //if (!threadsObj) return;
-    // const threadNameDia = document.createElement("dialog");
-    // const threadNameFrm = document.createElement("form");
-    // threadNameFrm.method = "dialog";
-    // const nameInput = document.createElement("input");
-    // nameInput.type = "text";
-    // nameInput.value = "New Thread";
-    // const closeButton = document.createElement("button");
-    // closeButton.addEventListener("click", () => {
-    //   threadNameDia.close();
-    // });
-    // threadNameFrm.appendChild(nameInput);
-    // threadNameFrm.appendChild(closeButton);
-    // threadNameDia.appendChild(threadNameFrm);
-    // document.body.appendChild(threadNameDia);
-    // threadNameDia.display = "";
-    // threadNameDia.open = true;
-    // threadNameDia.show();
-
     let nameInput = document.getElementById("threadNameInput");
     let threadName = nameInput.value;
     console.log("Got dialog data: " + threadName);
@@ -630,13 +609,16 @@ class ChatApp {
   addProviderList(provObj) {
     const providerDiv = this.providersContent;
     var content = "";
-    for (var i = 0; i < provObj.length; i++) {
-      console.log("Found provider J: " + provObj[i].name + " - " + i);
+    console.log("Adding providers: " + provObj.length);
+    for (let provKey in provObj) {
+      console.log("Found provider J: " + provObj[provKey].name);
       let spanColor = "blue";
-      if (provObj[i].status === "OFFLINE") {
+      let radStatus = "enabled";
+      if (provObj[provKey].status === "OFFLINE") {
         spanColor = "red";
+        radStatus = "disabled";
       }
-      content += `<p>${provObj[i].name} is <span style="color: ${spanColor};">${provObj[i].status}</span> with ${provObj[i].models.length} models</p>`;
+      content += `<p><input type="radio" ${radStatus} id="${provKey}-radio-id" style="padding: 1em;" name="providersRadio"> ${provObj[provKey].name} </input> is <span style="color: ${spanColor};">${provObj[provKey].status}</span> with ${Object.keys(provObj[provKey].models).length} models</p>`;
     }
     providerDiv.innerHTML = content;
   }
