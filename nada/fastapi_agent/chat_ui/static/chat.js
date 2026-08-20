@@ -23,7 +23,7 @@ class ChatApp {
     this.pendingThreadsData = null;
     this.selectedUserThread = null;
     this.providersContent = document.getElementById("providersContent");
-    this.providerSelector = document.getElementById("providersSelect");
+    //this.providerSelector = document.getElementById("providersSelect");
     this.modelSelector = document.getElementById("modelSelect");
     this.metricsContainer = document.getElementById("queryMetrics");
     this.providersList = document.getElementById("providersList");
@@ -61,12 +61,12 @@ class ChatApp {
     this.themeSelector.addEventListener("change", (e) =>
       this.changeTheme(e.target.value),
     );
-    this.modelSelector.addEventListener("change", () =>
-      this.updateModel(this.modelSelector),
-    );
-    this.providerSelector.addEventListener("change", () =>
-      this.updateModel(this.providerSelector),
-    );
+    // this.modelSelector.addEventListener("change", () =>
+    //   this.updateModel(this.modelSelector),
+    // );
+    // this.providerSelector.addEventListener("change", () =>
+    //   this.updateModel(this.providerSelector),
+    // );
     this.toggleAll.addEventListener("change", () =>
       this.toggleSelectAll(this.toggleAll),
     );
@@ -108,6 +108,31 @@ class ChatApp {
       : inputString;
   }
 
+  appendThreadsTable(parent, pendContext) {
+    // userCont is only for access to the thread.name
+    let userCont = this.userThreadsData;
+    const newTable = document.createElement("table");
+    const newRow = document.createElement("tr");
+    const newName = document.createElement("td");
+    const newVal = document.createElement("td");
+    const radioSel = document.createElement("input");
+    radioSel.type = "radio";
+    radioSel.name = "threadId";
+    radioSel.value = pendContext;
+    radioSel.addEventListener(
+      "change",
+      this.changeThread.bind(this, pendContext),
+      false,
+    );
+    newName.appendChild(radioSel);
+    newVal.textContent = userCont[pendContext].thread_name ?? "default";
+    newVal.style.color = "blue";
+    newRow.appendChild(newName);
+    newRow.appendChild(newVal);
+    newTable.appendChild(newRow);
+
+    parent.appendChild(newTable);
+  }
   // Add threads data
   addThreads() {
     const pendingDiv = this.userThreadsDiv;
@@ -120,31 +145,13 @@ class ChatApp {
     newHead.textContent = "Saved Threads";
     pendingDiv.appendChild(newHead);
     const newContextContent = document.createElement("div");
+    newContextContent.style.padding = "5px";
+    this.appendThreadsTable(newContextContent, "default");
     for (let pendContext in userCont) {
       //console.log("thread: " + pendContext);
-
-      newContextContent.style.padding = "5px";
-      const newTable = document.createElement("table");
-      const newRow = document.createElement("tr");
-      const newName = document.createElement("td");
-      const newVal = document.createElement("td");
-      const radioSel = document.createElement("input");
-      radioSel.type = "radio";
-      radioSel.name = "threadId";
-      radioSel.value = pendContext;
-      radioSel.addEventListener(
-        "change",
-        this.changeThread.bind(this, pendContext),
-        false,
-      );
-      newName.appendChild(radioSel);
-      newVal.textContent = userCont[pendContext].thread_name ?? "default";
-      newVal.style.color = "blue";
-      newRow.appendChild(newName);
-      newRow.appendChild(newVal);
-      newTable.appendChild(newRow);
-
-      newContextContent.appendChild(newTable);
+      if (pendContext != "default") {
+        this.appendThreadsTable(newContextContent, pendContext);
+      }
     }
     const addThreadButton = document.createElement("button");
     addThreadButton.textContent = "Add";
@@ -449,8 +456,8 @@ class ChatApp {
       console.log("Adding providers JSON");
       let provObj = await response.json();
       this.providerData = provObj;
-      this.addProvidersOptions(provObj);
       this.addProviderList(provObj);
+      this.addProvidersOptions(provObj);
     } catch (error) {
       this.addErrorMessage("Sorry, I encountered an error: " + error.message);
     }
@@ -491,9 +498,9 @@ class ChatApp {
   }
 
   async updateModel(elem) {
-    if (elem === this.providerSelector) {
-      console.log("Provider changed");
-      let provID = this.providerSelector.value;
+    if (elem) {
+      console.log("Provider changed: " + elem.target.value);
+      let provID = elem.target.value;
       for (let provKey in this.providerData) {
         if (provKey != provID) {
           this.providerData[provKey].is_active = false;
@@ -508,30 +515,15 @@ class ChatApp {
   }
 
   addProvidersOptions(providers_obj) {
-    // Clear existing provider options
-    if (this.providerSelector.options.length > 0) {
-      Array.from(this.providerSelector.options).forEach((opt) => {
-        this.providerSelector.remove(opt);
-      });
-    }
-
     for (let prov_key in providers_obj) {
-      const providerOpt = document.createElement("option");
-      providerOpt.text = providers_obj[prov_key].name;
-      providerOpt.value = prov_key;
       if (providers_obj[prov_key].is_active) {
-        providerOpt.selected = true;
-      }
-      this.providerSelector.add(providerOpt);
-
-      if (providerOpt.selected === true) {
+        console.log("Found active provider: " + prov_key);
         // Clear existing model options
         if (this.modelSelector.options.length > 0) {
           Array.from(this.modelSelector.options).forEach((opt) => {
             this.modelSelector.remove(opt);
           });
         }
-
         var is_selected = [];
         var is_loaded = [];
 
@@ -609,27 +601,44 @@ class ChatApp {
   addProviderList(provObj) {
     const providerDiv = this.providersContent;
     var content = "";
-    console.log("Adding providers: " + provObj.length);
+    //console.log("Adding providers: " + provObj.length);
+    var radID = "";
     for (let provKey in provObj) {
       console.log("Found provider J: " + provObj[provKey].name);
+      radID = provKey + "_radio";
       let spanColor = "blue";
       let radStatus = "enabled";
+      let radSelected = "";
       if (provObj[provKey].status === "OFFLINE") {
         spanColor = "red";
         radStatus = "disabled";
       }
-      content += `<p><input type="radio" ${radStatus} id="${provKey}-radio-id" style="padding: 1em;" name="providersRadio"> ${provObj[provKey].name} </input> is <span style="color: ${spanColor};">${provObj[provKey].status}</span> with ${Object.keys(provObj[provKey].models).length} models</p>`;
+      if (provObj[provKey].is_active) {
+        radSelected = "checked";
+      }
+      content += `<p><input type="radio" ${radStatus} ${radSelected} id="${radID}" style="padding: 1em;" name="providersRadio" value="${provKey}"> ${provObj[provKey].name} </input> is <span style="color: ${spanColor};">${provObj[provKey].status}</span> with ${Object.keys(provObj[provKey].models).length} models</p>`;
     }
     providerDiv.innerHTML = content;
+    // lame hack for wiring up event listener after radios added to dom
+    for (let provKey in provObj) {
+      const aRadio = document.getElementById(provKey + "_radio");
+      if (aRadio) {
+        console.log("Adding handler for: " + provKey);
+        aRadio.addEventListener("change", this.updateModel.bind(this), false);
+      }
+    }
   }
 
   async callAgentAPI(message) {
-    // inject modal call here
+    // more tech debt
+    let selectedProvider = document.querySelector(
+      'input[name="providersRadio"]:checked',
+    ).value;
 
     let dataObj = {
       query: message,
       history: this.conversationHistory,
-      provider_slug: this.providerSelector.value,
+      provider_slug: selectedProvider,
       model_id: this.modelSelector.value,
       thread_id: this.selectedUserThread ?? null,
     };
