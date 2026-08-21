@@ -253,7 +253,7 @@ class UsageChartApp {
                 groupedData[key] = [];
             }
             groupedData[key].push({
-                time: item.created_time,
+                time: item.created_time * 1000,  // Convert Unix seconds to milliseconds for d3
                 value: item.run_usage.total_tokens || 0,
                 item: item,
             });
@@ -271,7 +271,7 @@ class UsageChartApp {
         });
 
         // Prepare data for d3 line chart
-        const allTimes = this.data.map((d) => d.created_time);
+        const allTimes = this.data.map((d) => d.created_time * 1000);  // Convert Unix seconds to milliseconds for d3
         const allValues = this.data.map((d) => d.run_usage.total_tokens || 0);
 
         // Create scales
@@ -389,7 +389,7 @@ class UsageChartApp {
                 .style("cursor", "pointer")
                 .on("mouseover", (event, d) => {
                     tooltip.style("opacity", 1);
-                    const date = new Date(d.time * 1000);
+                    const date = new Date(d.time);
                     tooltip.html(
                         `<strong>${groupKey}</strong><br/>` +
                         `Time: ${date.toLocaleString()}<br/>` +
