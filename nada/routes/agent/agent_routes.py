@@ -172,15 +172,18 @@ async def query_ai_agent(request: Request,
         kv = KVBase(redis_con=red_con, service_prefix=f"thread_{current_user.username}")
         _ = await kv.add_service_keys(service_name=thread_id, keys=["messages"], values=[json.dumps(history)])
         elapsed_time = end_time - start_time
-        usage_count = await record_usage(
-            session=red_con,
-            current_user=current_user,
-            usage_id=uuid.uuid4().hex,
-            usage_data=usage,
-            elapsed_time=elapsed_time,
-            model_id=agent_query.model_id,
-            provider_slug=agent_query.provider_slug
-        )
+        if usage:
+            usage_count = await record_usage(
+                session=red_con,
+                current_user=current_user,
+                usage_id=uuid.uuid4().hex,
+                usage_data=usage,
+                elapsed_time=elapsed_time,
+                model_id=agent_query.model_id,
+                provider_slug=agent_query.provider_slug
+            )
+        else:
+            usage_count = 0
         logger.info(f"Recorded {usage_count} usage items, elapsed time: {elapsed_time}")
         return AgentResponse(
             query=agent_query.query,
@@ -205,7 +208,8 @@ async def record_usage(
     session: redis,
     current_user: UserInDB,
     usage_id: str,
-    usage_data: RunUsage, elapsed_time: float,
+    usage_data: RunUsage,
+    elapsed_time: float,
     model_id: str,
     provider_slug: str
 ):
