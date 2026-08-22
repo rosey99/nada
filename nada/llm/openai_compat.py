@@ -3,7 +3,7 @@ import logging
 import httpx
 import requests
 
-from pydantic_ai.models.openai import OpenAIChatModel, ModelSettings
+from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
 from nada.models import LlamaArgs, LlamaModelData, ModelProvider

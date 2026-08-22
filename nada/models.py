@@ -10,7 +10,7 @@ from pydantic_ai import RunUsage
 
 class RequestUsage(BaseModel):
     run_usage: RunUsage
-    created_time: float = Field(description="When query was recorded")
+    created_time: float = Field(description="When query was recorded, a unix epoch timestamp")
     elapsed_time: float = Field(description="Duration of query in seconds")
     job_id: str | None = Field(description="Workflow ID if this request is part of a workflow", default=None)
     model_id: str | None = Field(description="Model ID", default=None)
