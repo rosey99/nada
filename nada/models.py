@@ -173,6 +173,9 @@ class LlamaModelData(BaseModelData):
     model_status: str = Field(description="Model is loaded or unloaded")
     selected: bool = Field(description="Model is selected for load and use, even if already loaded.", default=False)
     # for consistency with Openrouter standard
+    supported_parameters: Set[str] | None = None
+    knowledge_cutoff: str | None = None
+    expiration_date: str | None = None
     context_size: Optional[int] = Field(description="Model context length.", default=None)
     model_args: LlamaArgs
     architecture: ModelArchitecture
