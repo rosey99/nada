@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{{APP_TITLE}} AI Assistant</title>
+        <link
+            href="{{ url_for('static', path='/new_style.css') }}"
+            rel="stylesheet"
+        />
+    </head>
+
+    <body class="minimal">
+        <div class="main-container">
+            <!-- Left Panel: Chat Interface -->
+            <div class = "left-panel">
+                <p>logged in: {{current_user.display_name}}</p>
+                <p>{{current_user.full_name}}</p>
+                <div class="context-conainer">
+                    <div id="addContextItem">
+                        <h4>Add context or create. . .</h4>
+                        <label for="newContextIn">New:</label>
+                        <input id="newContextIn" name="newContextIn"></input>
+                        <br />
+                        <label for="existingContext">Or choose a context key:</label>
+                        <select id="existingContext" name="existingContext"></select>
+                        <br />
+                        <br />
+                        <label for="newContextKey">Name</label>
+                        <input id="newContextKey" name="newContextKey"></input>
+                        <br />
+                        <br />
+                        <label for="newContextVal" style="vertical-align: top;">Value</label>
+                        <textarea
+                            id="newContextVal"
+                            name="newContextVal"
+                            placeholder="Enter your context value here..."
+                            autocomplete="off"
+                            rows="3"
+                            style="resize: vertical; overflow-y: auto"
+                        ></textarea><br />
+                        <button id="contextAddButton">Add</button>
+                        <br />
+                        <div id="newContextItems"></div>
+                        <br />
+                        <button id="contextSaveButton">Save</button>
+                        <br />
+                        <hr />
+                        <br />
+
+
+                    </div>
+                    <div id="userContext">
+
+                    </div>
+                    <div id="userThreads">
+
+                    </div>
+
+                </div>
+            </div>
+            <div class="chat-panel">
+                <div class="chat-header">
+                    <input type="checkbox" id="toggleAllMessages"></input>
+                    <button class="clear-history-btn" id="clearHistoryBtn">
+                        <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                        >
+                            <path
+                                d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                            />
+                        </svg>
+                        Clear History
+                    </button>
+                    <div class="history-indicator" id="historyIndicator">
+                        History: 0 messages
+                    </div>
+                    <select
+                        class="theme-selector"
+                        id="themeSelector"
+                        style="position: absolute; right: 35%"
+                    >
+                        <option value="dark">Dark</option>
+                        <option value="minimal">Minimal</option>
+                        <option value="vibrant">Vibrant</option>
+                    </select>
+                    <h1>{{APP_TITLE}} Assistant</h1>
+                    <div class="status-indicator" id="statusIndicator" style="position: absolute; right: 34%"></div>
+                </div>
+
+                <div class="chat-messages" id="chatMessages"></div>
+
+                <div class="typing-indicator" id="typingIndicator">
+                    <div class="message-content">
+                        <span>AI is thinking</span>
+                        <div class="typing-dots">
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-input">
+                    <div class="input-container">
+                        <div id="file-container">
+                            <form id="fileUpload" name="fileUpload">
+                                <input
+                                    type="file"
+                                    id="fileInput"
+                                    style="display: none" multiple
+                                />
+                            </form>
+                            <button title="Attach file..." id="attachButton">
+                                <svg
+                                    width="24"
+                                    height="24"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                >
+                                    <path d="M12 5v14M5 12l7 7 7-7" />
+                                </svg>
+                            </button>
+                        </div>
+
+
+                        <textarea
+                            id="messageInput"
+                            placeholder="Type your message here..."
+                            autocomplete="off"
+                            rows="3"
+                            style="resize: vertical; overflow-y: auto"
+                        ></textarea>
+                        <button id="sendButton">
+                            <svg
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            >
+                                <line x1="22" y1="2" x2="11" y2="13" />
+                                <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div id="fileListing">
+
+                </div>
+            </div>
+
+            <!-- Right Panel: Provider Settings -->
+            <div class="settings-panel">
+                <div id="providersList" class="providers-list">
+                    <h2>Provider Settings</h2>
+                    <div id="providersContent" class="status-message">
+
+                    </div>
+                    <div id="providersStatus" class="status-message">
+                        <!--<p>Status</p>
+                        <label for="providersSelect"
+                            >Choose a Model Provider:</label
+                        >
+                        <select
+                            id="providersSelect"
+                            name="providersSelect"
+                        ></select>
+                        <br />-->
+                        <label for="modelSelect">Choose a Model:</label>
+                        <select id="modelSelect" name="modelSelect"></select>
+                        <br />
+                        <br />
+                        <h5>Input types: <span id="inputSpan"></span></h5>
+                        <h5>Output types: <span id="outputSpan"></span></h5>
+                    </div>
+                </div>
+
+                <div class="metrics-section">
+                    <h2>Metrics</h2>
+                    <div id="queryMetrics" class="metrics-message"></div>
+                </div>
+            </div>
+
+        </div>
+        <script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script>
+
+        <script src="{{ url_for('static', path='/chat.js') }}"></script>
+    </body>
+</html>
