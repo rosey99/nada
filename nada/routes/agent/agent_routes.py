@@ -217,7 +217,7 @@ async def record_usage(
     logger.info(f"Usage data: {usage_data}")
     r = await red_con.hset(unique_key, mapping=usage_data)
     time_score = time.time()
-
+    # for now, always add to the global and user usage indexes
     _ = await red_con.zadd("usage", {unique_key: time_score})
     _ = await red_con.zadd(f"usage:{current_user.username}", {unique_key: time_score})
     #_ = await red_con.zadd(unique_key, {f"{current_user.username}": time.time()})
