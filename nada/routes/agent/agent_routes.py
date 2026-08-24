@@ -25,20 +25,7 @@ agent_router = APIRouter(prefix="/agent/v1", tags=["agent"])
 
 @agent_router.get("/login", response_class=HTMLResponse)
 async def get_login_user(request: Request): #, accept_language: str = Depends(get_accept_language)):
-    #logger.debug('Got the item request')
-    #logger.debug(f'Got the item request for locale: {request.headers.get("Accept-Language", None)}')
-    # this_locale = request.headers.get("Accept-Language", None)
-    # lang = 'en'
-    # if this_locale:
-    #     lang = this_locale[:2]
-    #     if lang in TRANSLATIONS:
-    #         this_trans = TRANSLATIONS[lang]
-    #     else:
-    #         this_trans = None
-    # #logger.debug(f'jinja is using: {type(TRANSLATIONS)}')
-    # #templates.env.install_gettext_translations([lang])
-    # if this_trans:
-    #     templates.env.install_gettext_translations(this_trans)
+
     return templates.TemplateResponse(
         request=request, name="login.html", context={}
     )
