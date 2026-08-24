@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{{APP_TITLE}} Usage Analytics</title>
+        <link
+            href="{{ url_for('static', path='/new_style.css') }}"
+            rel="stylesheet"
+        />
+        <script src="https://d3js.org/d3.v7.min.js"></script>
+        <style>
+            .usage-new-container {
+                max-width: 1400px;
+                margin: 0 auto;
+                padding: 20px;
+            }
+            .usage-new-controls {
+                display: flex;
+                gap: 20px;
+                align-items: flex-end;
+                margin-bottom: 30px;
+                flex-wrap: wrap;
+                background: var(--chat-bg);
+                padding: 20px;
+                border-radius: var(--border-radius);
+                box-shadow: var(--shadow);
+            }
+            .control-group {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+            .control-group label {
+                font-size: 12px;
+                color: var(--text-muted);
+                text-transform: uppercase;
+                font-weight: 600;
+            }
+            .control-group input,
+            .control-group select {
+                padding: 10px;
+                border: 1px solid var(--input-border);
+                border-radius: 8px;
+                background: var(--input-bg);
+                color: var(--text-color);
+                font-size: 14px;
+                outline: none;
+            }
+            .control-group input:focus,
+            .control-group select:focus {
+                border-color: var(--input-focus);
+            }
+            .btn-primary {
+                padding: 10px 24px;
+                background: var(--send-btn-bg);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                font-weight: 600;
+                transition: var(--transition);
+            }
+            .btn-primary:hover {
+                background: var(--send-btn-hover);
+                transform: translateY(-1px);
+            }
+            .btn-primary:disabled {
+                background: var(--text-muted);
+                cursor: not-allowed;
+            }
+
+            .chart-section {
+                margin-bottom: 40px;
+            }
+            .chart-section h3 {
+                color: var(--text-color);
+                margin-bottom: 15px;
+                font-size: 1.2rem;
+                border-left: 4px solid var(--input-focus);
+                padding-left: 12px;
+            }
+            .charts-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                gap: 20px;
+            }
+            .small-multiple-container {
+                background: var(--chat-bg);
+                border: 1px solid var(--assistant-msg-border);
+                border-radius: var(--border-radius);
+                padding: 15px;
+                box-shadow: var(--shadow);
+            }
+            .small-multiple-title {
+                font-size: 0.9rem;
+                color: var(--text-color);
+                margin-bottom: 10px;
+                text-align: center;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .chart-svg {
+                width: 100%;
+                height: 180px;
+            }
+            .line {
+                fill: none;
+                stroke-width: 2;
+            }
+            .axis-label {
+                font-size: 10px;
+                fill: var(--text-muted);
+            }
+            .grid line {
+                stroke: var(--assistant-msg-border);
+                stroke-opacity: 0.5;
+            }
+            .grid path {
+                stroke-width: 0;
+            }
+
+            #loading-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                display: none;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+                color: white;
+                font-size: 1.5rem;
+            }
+            .error-message {
+                background: rgba(254, 202, 202, 0.1);
+                border: 1px solid #fca5a5;
+                color: #fca5a5;
+                padding: 15px;
+                border-radius: 8px;
+                margin-bottom: 20px;
+                display: none;
+            }
+        </style>
+    </head>
+    <body class="minimal">
+        <div id="loading-overlay">Loading...</div>
+        <div class="usage-new-container">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="color: var(--text-color);">Usage Analytics</h2>
+                <a href="/agent/v1/chat" style="color: var(--input-focus); text-decoration: none;">← Back to Chat</a>
+            </div>
+
+            <div id="error-display" class="error-message"></div>
+
+            <div class="usage-new-controls">
+                <div class="control-group">
+                    <label for="since-date">Since</label>
+                    <input type="datetime-local" id="since-date" />
+                </div>
+                <div class="control-group">
+                    <label for="until-date">Until</label>
+                    <input type="datetime-local" id="until-date" />
+                </div>
+                <div class="control-group">
+                    <label for="provider-filter">Provider</label>
+                    <select id="provider-filter">
+                        <option value="all">All Providers</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="model-filter">Model</label>
+                    <select id="model-filter">
+                        <option value="all">All Models</option>
+                    </select>
+                </div>
+                <button id="refresh-btn" class="btn-primary">Update Charts</button>
+            </div>
+
+            <div id="input-tokens-section" class="chart-section">
+                <h3>Input Tokens</h3>
+                <div id="input-tokens-grid" class="charts-grid"></div>
+            </div>
+
+            <div id="output-tokens-section" class="chart-section">
+                <h3>Output Tokens</h3>
+                <div id="output-tokens-grid" class="charts-grid"></div>
+            </div>
+
+            <div id="elapsed-time-section" class="chart-section">
+                <h3>Elapsed Time (s)</h3>
+                <div id="elapsed-time-grid" class="charts-grid"></div>
+            </div>
+        </div>
+
+        <script src="{{ url_for('static', path='/usage_new.js') }}"></script>
+    </body>
+</html>
