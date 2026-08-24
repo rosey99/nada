@@ -121,9 +121,7 @@ some_tools = [
 
 
 class AgentCapabilities(BaseModel):
-    args_tools: Dict[str, Dict[str, Any]] | None = Field(description="", default_factory=dict)
     args_capabilities: Dict[str, Dict[str, Any]] | None = Field(description="", default_factory=dict)
-    tools: Dict[str, AgentTooling] | None = Field(description="", default_factory=dict)
     capabilities: Dict[str, AgentTooling] | None = Field(description="", default_factory=dict)
 
 

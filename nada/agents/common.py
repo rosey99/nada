@@ -3,11 +3,9 @@ from typing import Any, Optional
 
 from pydantic_ai.models import Model as PydanticAIModel
 
-from .pydantic_ai import PydanticAIAgent
+from nada.agents.pydantic_ai import PydanticAIAgent
 
 from nada.models import BaseModelData
-
-__all__ = ["AIAgent", "PydanticAIAgent"]
 
 DEFAULT_PROMPT = """
 Follow those main instruction:
