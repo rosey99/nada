@@ -7,7 +7,7 @@ from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
 from nada.models import LlamaArgs, LlamaModelData, ModelProvider
-
+from nada.redis.client.redis_cache import short_region, single_key_generator
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,8 @@ def get_llama_model(model_id: str, provider: ModelProvider) -> OpenAIChatModel:
     return model
 
 
-def get_available_llama_models(provider: ModelProvider) -> ModelProvider:
+@short_region.cache_on_arguments('providers', function_key_generator=single_key_generator)
+def get_available_llama_models(provider_slug: str, provider: ModelProvider) -> ModelProvider:
     """
 
     """

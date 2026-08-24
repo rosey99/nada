@@ -33,6 +33,7 @@ async def json_model_providers(request: Request, providers: ProvidersDep, curren
 
     """
     # leaving request here for now, auth to follow
+    providers.refresh_provider()
     return providers.providers
 
 
