@@ -64,7 +64,7 @@ class UserPublic(BaseModel):
 
 
 class UserInDB(BaseModel):
-    hashed_password: str
+    hashed_password: str = Field(description="Hashed password", exclude=True)
     is_active: int
     is_superuser: int
     username: str
@@ -193,7 +193,7 @@ class ModelProvider(BaseModel):
     models_url: Optional[str] | None = Field(description="Models and model status URL.")
     # load_url is here to facilitate explicitly measuring model load times, future use.
     load_url: Optional[str] | None = Field(description="Manual model loading URL")
-    api_key: str = Field(description="Optional API key, required for most clients even local", default='NOT_A_REAL_KEY')
+    api_key: str = Field(description="Optional API key, required for most clients even local", default='NOT_A_REAL_KEY', exclude=True)
     support_autoload: Optional[bool] = Field(description="Manual model loading URL", default=True)
     models: Dict[str, LlamaModelData] = Field(description="Hosted LLMs", default_factory=dict)
     get_available_models: ImportString
