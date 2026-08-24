@@ -22,7 +22,8 @@ class ProviderCollection:
 
         provider = self.providers[provider_slug]
         try:
-            provider = provider.get_available_models(self.providers[provider_slug])
+            # include slug as arg for cache wrapper which is delegated out to the provider extension
+            provider = provider.get_available_models(provider_slug, self.providers[provider_slug])
             provider.status = 'ONLINE'
         except (Timeout, ConnectionError):
             # TODO clumsy, add a status to provider?

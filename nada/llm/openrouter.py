@@ -12,7 +12,7 @@ from pydantic_ai.models.openrouter import OpenRouterModel
 from pydantic_ai.providers.openrouter import OpenRouterProvider
 
 from nada.models import ModelProvider, ModelArchitecture
-
+from nada.redis.client.redis_cache import mid_region, single_key_generator
 
 logger = logging.getLogger(__name__)
 
@@ -71,8 +71,8 @@ class OpenRouterModels(BaseModel):
         description="Listing of currently available models."
     )
 
-
-def get_available_openrouter_models(provider: ModelProvider) -> ModelProvider:
+@mid_region.cache_on_arguments('providers', function_key_generator=single_key_generator)
+def get_available_openrouter_models(provider_slug: str, provider: ModelProvider) -> ModelProvider:
     """
     A placeholder for now
     """
