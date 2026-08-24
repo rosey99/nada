@@ -88,6 +88,20 @@ async def usage_page(request: Request, current_user: security.CurrentCookieUser)
     else:
         return current_user
 
+@agent_router.get("/usagechart", response_class=HTMLResponse)
+async def usage_chart_page(request: Request, current_user: security.CurrentCookieUser):
+    """
+    Usage chart page.
+    """
+    if isinstance(current_user, UserInDB):
+        context = {'APP_TITLE': "Nada Agent Chat", "current_user": current_user}
+        return templates.TemplateResponse(
+                request=request, name="usage_new.html", context=context
+            )
+    else:
+        return current_user
+
+
 
 @agent_router.post("/query", response_model=AgentResponse)
 async def query_ai_agent(request: Request,
