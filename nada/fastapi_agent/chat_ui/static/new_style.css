@@ -99,8 +99,8 @@ body {
 .main-container {
     display: flex;
     gap: 20px;
-    width: 95%;
-    max-width: 1400px;
+    width: 85%;
+    max-width: 95%;
     height: 90vh;
     transition: var(--transition);
 }
@@ -492,10 +492,21 @@ body.vibrant #sendButton:focus-visible {
 
 /* Settings Panel */
 .settings-panel {
-    width: 320px;
+    width: 20%;
+    max-width: 20%;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 10px;
+    transition: var(--transition);
+}
+
+/* Settings Panel */
+.left-panel {
+    width: 15%;
+    max-width: 20%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
     transition: var(--transition);
 }
 

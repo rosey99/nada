@@ -87,7 +87,7 @@ class PydanticAIAgent(BaseAgent):
             # TODO move request limits out to config
             messages = [enhanced_message]
             messages.extend(bin_content)
-            result = await self.agent.run(messages, usage_limits = UsageLimits(request_limit=100))
+            result = await self.agent.run(messages, usage_limits = UsageLimits(request_limit=200))
             response_text = result.output
             response_usage = result.usage
 
