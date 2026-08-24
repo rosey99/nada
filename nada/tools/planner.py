@@ -14,15 +14,15 @@ from nada.llm.common.provider import ProviderCollection
 from nada.models import AgentQuery
 from nada.settings import providers
 
-from typing import Dict, List, Optional, Set
-
+from typing import Any, Dict, List, Optional, Set, Annotated
+from slugify import slugify
 #from langchain.tools import tool, BaseTool
-from pydantic import Annotated, BaseModel, Field
+from pydantic import BaseModel, Field
 #from pydantic_ai_harness.experimental.planning import Planning, PlanningToolset
 from pydantic_ai.tools import AgentDepsT, RunContext, Tool
 from pydantic_ai.toolsets import AbstractToolset
 from pydantic_ai.capabilities import AbstractCapability
-from .native_or_local import NativeOrLocalTool
+
 
 
 logger = logging.getLogger(__name__)
@@ -58,7 +58,7 @@ class PlanStep(BaseModel):
 # The result class that is created in all callbacks
 class PlanStepResult(BaseModel):
     agent_response: Optional[str] | None = Field(description="The text response received from the agent")
-    success_flag: bool = Field(description="A value greater than 0 indicates success", default=False)
+    errors: List[str] | None = Field(description="A list of error messages", default_factory=list)
 
 
 class Plan(BaseModel):
@@ -72,14 +72,77 @@ class Plan(BaseModel):
         default_factory=list
     )
 
+
+class AgentCollection:
+    def __init__(self, agent_provider_list: List[dict]):
+
+        # TODO for now validate here in init
+        self.agent_providers = {slugify(provider['name']): AgentProvider(**provider) for provider in agent_provider_list}
+
+
+class AgentTooling(BaseModel):
+    name: str
+    tool_type: str  # helper for provider abstraction, could be 'capability', or 'tool' for pydantic AI
+    get_tool: ImportString
+    default_args: Dict | None
+    description: str
+
+some_tools = [
+    {
+        'name': "duckduckgo",
+        'tool_type': 'tool',
+        'get_tool': 'pydantic_ai.common_tools.duckduckgo.duckduckgo_search_tool',
+        'default_args': None,
+        'description': "Search the web with DuckDuckGo"
+    },
+    {
+        'name': "web_fetch",
+        'tool_type': 'tool',
+        'get_tool': 'pydantic_ai.common_tools.web_fetch.web_fetch_tool',
+        'default_args': {'max_content_length': None},
+        'description': "Visit web pages with optional markdown conversion"
+    },
+    {
+        'name': "shell",
+        'tool_type': 'capability',
+        'get_tool': 'pydantic_ai_harness.Shell',
+        'default_args': None,
+        'description': "Shell command executor"
+    },
+    {
+        'name': "filesystem",
+        'tool_type': 'capability',
+        'get_tool': 'pydantic_ai_harness.FileSystem',
+        'default_args': None,
+        'description': "Access the local filesystem"
+    },
+
+]
+
+
 class AgentCapabilities(BaseModel):
-    _tools = {
-        "duckduckgo": duckduckgo_search_tool,
-        "web_fetch": web_fetch_tool
-    }
-    tools_args: Dict = {"web_fetch": {"max_content_length": None}}
-    tools: Dict[str, NativeOrLocalTool[AgentDepsT]]
-    capabilities: Dict[str, AbstractCapability[AgentDepsT]]
+    args_tools: Dict[str, Dict[str, Any]] | None = Field(description="", default_factory=dict)
+    args_capabilities: Dict[str, Dict[str, Any]] | None = Field(description="", default_factory=dict)
+    tools: Dict[str, AgentTooling] | None = Field(description="", default_factory=dict)
+    capabilities: Dict[str, AgentTooling] | None = Field(description="", default_factory=dict)
+
+
+class AgentModel(BaseModel):
+    name: str | None = None
+    description: str | None
+    # optional override hook for get_agent func
+    get_agent: ImportString | None = None
+    # also optional, as it may be set in get_agrnt
+    system_prompt: str | None = None
+    capabilities: AgentCapabilities
+
+
+class AgentProvider(BaseModel):
+    name: str
+    agents: Dict[str, AgentModel]
+    capabilities: AgentCapabilities | None
+    get_agent: ImportString
+    get_agent_list: ImportString
 
 
 def get_planning_agent(model, system_prompt: str, tools: list | None = None, capabilities: list | None = None, request_settings: dict | None = None):
