@@ -1,15 +1,15 @@
-from typing import Annotated, Optional
+from typing import Annotated
 from dataclasses import asdict
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 
 
-from fastapi import APIRouter, HTTPException, Request, UploadFile, File, Form, Depends
+from fastapi import APIRouter, HTTPException, Request, UploadFile, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm
 from pydantic_ai import BinaryContent, RunUsage
 
 from nada.deps import get_fastapi_agent, SessionDep
-from nada.models import AgentQuery, AgentResponse, UserInDB, UserUsage, RequestUsage
+from nada.models import AgentQuery, AgentResponse, UserInDB
 from nada import security
 from nada.redis.client.redis_data import redis, KVBase, red_pool
 from nada.settings import settings, templates
