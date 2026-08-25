@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field, ImportString, EmailStr
 from pydantic_ai.common_tools.web_fetch import web_fetch_tool
 from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
 from pydantic_ai_harness import Shell, FileSystem
-from pydantic_ai import Agent
+from nada.agents.pydantic_ai import PydanticAIAgent
 
 from nada.llm.common.provider import ProviderCollection
 from nada.models import AgentQuery
@@ -87,6 +87,7 @@ class AgentTooling(BaseModel):
     default_args: Dict | None
     description: str
 
+
 some_tools = [
     {
         'name': "duckduckgo",
@@ -129,7 +130,7 @@ class AgentModel(BaseModel):
     name: str | None = None
     description: str | None
     # optional override hook for get_agent func
-    get_agent: ImportString | None = None
+    get_agent: ImportString | None = Field(description="", default=None, exclude=True)
     # also optional, as it may be set in get_agrnt
     system_prompt: str | None = None
     capabilities: AgentCapabilities
@@ -139,19 +140,32 @@ class AgentProvider(BaseModel):
     name: str
     agents: Dict[str, AgentModel]
     capabilities: AgentCapabilities | None
-    get_agent: ImportString
-    get_agent_list: ImportString
+    get_agent: ImportString | None = Field(description="", default=None, exclude=True)
+    args_agents: Dict[str, Dict[str, Any]] | None = Field(description="Agent override arguments", default_factory=dict)
 
+fastapi_agent = {
+    'name': 'nadaAgent',
+    'description': 'Built-in default agent',
+    'get_agent': None,
+    'system_prompt': 'You are a helpful and concise AI agent.',
+    'capabilities': some_tools
+}
+
+agent_provider = {
+    'name': 'pydantic_ai',
+    'agents': {'fastapi_agent': fastapi_agent,},
+    'capabilities': some_tools,
+}
 
 def get_planning_agent(model, system_prompt: str, tools: list | None = None, capabilities: list | None = None, request_settings: dict | None = None):
     """Create the planning or evaluator agent with system prompt and model"""
     logger.info(f"initialzing planning agent with {model if isinstance(model, str) else model.__class__}")
     tools = tools or []
     capabilities = capabilities or []
-    return Agent(
+    return PydanticAIAgent(
         model=model,
         system_prompt=system_prompt,
-        output_type=str,
+        output_type=Plan,
         tools=tools,
         capabilities=capabilities,
         settings=request_settings,
