@@ -12,7 +12,7 @@ from nada.agents.pydantic_ai import PydanticAIAgent
 
 from nada.llm.common.provider import ProviderCollection
 from nada.models import AgentQuery
-from nada.settings import providers
+#from nada.settings import providers
 
 from typing import Any, Dict, List, Optional, Set, Annotated
 from slugify import slugify
@@ -32,7 +32,6 @@ class PlanStep(BaseModel):
 
     job_id: str = Field(
         description="JobID assigned by dispatcher. Used for tracking results, identical for each step.",
-        gt=0
     )
     agent_query: AgentQuery = Field(
         description="Instructions for this step, including prompt, and optionally model, provider, and message history."
@@ -42,11 +41,11 @@ class PlanStep(BaseModel):
         description="The names of agent tools required for execution of this step."
                     "Only use tool names that are available in your tool listing."
     )
-    parallel: bool = Field(
-        description="Whether the step can be executed concurrently with adjacent PlanSteps. Only following steps "
-                    "with parallel = True can be executed concurrently with this step, until parallel = False is encountered",
-        default=False
-    )
+    # parallel: bool = Field(
+    #     description="Whether the step can be executed concurrently with adjacent PlanSteps. Only following steps "
+    #                 "with parallel = True can be executed concurrently with this step, until parallel = False is encountered",
+    #     default=False
+    # )
     tags: Optional[Set[str]] | None = Field(
         description="Optional list of tags, used by router.",
         default_factory=set
@@ -83,19 +82,20 @@ class AgentCollection:
 class AgentTooling(BaseModel):
     name: str
     tool_type: str  # helper for provider abstraction, could be 'capability', or 'tool' for pydantic AI
-    get_tool: ImportString
+    get_tool: ImportString = Field(description="", default=None, exclude=True)
     default_args: Dict | None
     description: str
 
 
-some_tools = [
-    {
+some_tools = {
+    "duckduckgo": {
         'name': "duckduckgo",
         'tool_type': 'tool',
         'get_tool': 'pydantic_ai.common_tools.duckduckgo.duckduckgo_search_tool',
         'default_args': None,
         'description': "Search the web with DuckDuckGo"
     },
+    "web_fetch":
     {
         'name': "web_fetch",
         'tool_type': 'tool',
@@ -103,6 +103,7 @@ some_tools = [
         'default_args': {'max_content_length': None},
         'description': "Visit web pages with optional markdown conversion"
     },
+    "shell":
     {
         'name': "shell",
         'tool_type': 'capability',
@@ -110,6 +111,7 @@ some_tools = [
         'default_args': None,
         'description': "Shell command executor"
     },
+    "filesystem":
     {
         'name': "filesystem",
         'tool_type': 'capability',
@@ -118,7 +120,7 @@ some_tools = [
         'description': "Access the local filesystem"
     },
 
-]
+}
 
 
 class AgentCapabilities(BaseModel):
@@ -148,7 +150,7 @@ fastapi_agent = {
     'description': 'Built-in default agent',
     'get_agent': None,
     'system_prompt': 'You are a helpful and concise AI agent.',
-    'capabilities': some_tools
+    'capabilities': {"capabilities": some_tools, "args_capabilities": {k: v['default_args'] for k,v in some_tools.items() if v['default_args'] is not None}}
 }
 
 agent_provider = {
@@ -156,6 +158,9 @@ agent_provider = {
     'agents': {'fastapi_agent': fastapi_agent,},
     'capabilities': some_tools,
 }
+
+agent_providers = [agent_provider]
+
 
 def get_planning_agent(model, system_prompt: str, tools: list | None = None, capabilities: list | None = None, request_settings: dict | None = None):
     """Create the planning or evaluator agent with system prompt and model"""

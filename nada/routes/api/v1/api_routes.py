@@ -8,8 +8,9 @@ from pydantic_ai import RunUsage
 from nada.models import ModelProvider, Token, User, UserInDB, UserUsage
 from nada.deps import ProvidersDep, SessionDep
 from nada.security import CredentialsException, authenticate_user, create_access_token, get_current_active_user
-from nada.settings import settings
+from nada.settings import settings, agents_available
 from nada.redis.client.redis_data import redis, KVBase, red_pool
+from nada.tools.planner import AgentProvider, AgentCollection
 import json
 import time
 import uuid
@@ -24,6 +25,18 @@ api_router = APIRouter(prefix="/api/v1", tags=["api-v1"])
 async def root():
     """Welcome endpoint that returns basic API information"""
     return {"message": "Welcome to My Business API"}
+
+
+
+@api_router.get("/agents", response_model=Dict[str, AgentProvider])
+async def json_agent_providers(request: Request, current_user: Annotated[UserInDB, Depends(get_current_active_user)]):
+    """
+    Retrieve agent providers and agents as JSON.
+
+    """
+    if isinstance(current_user, UserInDB):
+
+        return agents_available.agent_providers
 
 
 @api_router.get("/providers", response_model=Dict[str, ModelProvider])
