@@ -156,7 +156,7 @@ fastapi_agent = {
 agent_provider = {
     'name': 'pydantic_ai',
     'agents': {'fastapi_agent': fastapi_agent,},
-    'capabilities': some_tools,
+    'capabilities': {"capabilities": some_tools, "args_capabilities": {k: v['default_args'] for k,v in some_tools.items() if v['default_args'] is not None}},
 }
 
 agent_providers = [agent_provider]

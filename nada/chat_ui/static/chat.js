@@ -20,6 +20,7 @@ class ChatApp {
     this.providerData = null;
     this.userContextData = null;
     this.userThreadsData = null;
+    this.userAgentsData = null;
     this.pendingThreadsData = null;
     this.selectedUserThread = null;
     this.providersContent = document.getElementById("providersContent");
@@ -47,6 +48,7 @@ class ChatApp {
     this.newContextItemsDiv = document.getElementById("newContextItems");
     this.userContextDiv = document.getElementById("userContext");
     this.userThreadsDiv = document.getElementById("userThreads");
+    this.userAgentsDiv = document.getElementById("agentsAvailableProvider");
 
     this.initializeEventListeners();
     this.updateHistoryIndicator();
@@ -107,6 +109,72 @@ class ChatApp {
       ? inputString.substring(0, maxLength - 5) + "..."
       : inputString;
   }
+
+  addAgents() {
+    const pendingDiv = this.userAgentsDiv;
+    let userCont = this.userAgentsData;
+    // clear
+    Array.from(pendingDiv.children).forEach((elem) => {
+      pendingDiv.removeChild(elem);
+    });
+    // const newHead = document.createElement("h4");
+    // newHead.textContent = "Saved Threads";
+    // pendingDiv.appendChild(newHead);
+    const newContextContent = document.createElement("div");
+    newContextContent.style.padding = "5px";
+    // this.appendThreadsTable(newContextContent, "default");
+    for (let pendContext in userCont) {
+      //console.log("thread: " + pendContext);
+      // if (pendContext != "default") {
+      //   this.appendThreadsTable(newContextContent, pendContext);
+      // }
+      let agent_provider = pendContext;
+      const newTable = document.createElement("table");
+      const newRow = document.createElement("tr");
+      const newName = document.createElement("td");
+      const newVal = document.createElement("td");
+      const radioSel = document.createElement("input");
+      radioSel.type = "radio";
+      radioSel.name = "AgentProvider";
+      radioSel.value = userCont[pendContext].name;
+      radioSel.addEventListener(
+        "change",
+        this.changeAgentProvider.bind(this, pendContext),
+        false,
+      );
+      newName.appendChild(radioSel);
+      newVal.textContent = userCont[pendContext].name ?? "default";
+      newVal.style.color = "blue";
+      newRow.appendChild(newName);
+      newRow.appendChild(newVal);
+      newTable.style.padding = "10px";
+      newTable.appendChild(newRow);
+      const TitleRow = document.createElement("tr");
+      const TitleName = document.createElement("td");
+      TitleName.textContent = "Tools: ";
+      TitleRow.appendChild(TitleName);
+      newTable.appendChild(TitleRow);
+      for (let provContext in userCont[pendContext].capabilities.capabilities) {
+        console.log("Got tool: " + provContext);
+        let capObj =
+          userCont[pendContext].capabilities.capabilities[provContext];
+        const newToolRow = document.createElement("tr");
+        const newTName = document.createElement("td");
+        const newTVal = document.createElement("td");
+        newTName.style.color = "blue";
+        newTName.textContent = capObj.name;
+        newTVal.textContent = capObj.description;
+
+        newToolRow.appendChild(newTName);
+        newToolRow.appendChild(newTVal);
+        newTable.appendChild(newToolRow);
+      }
+
+      pendingDiv.appendChild(newTable);
+    }
+  }
+
+  changeAgentProvider(pendContext) {}
 
   appendThreadsTable(parent, pendContext) {
     // userCont is only for access to the thread.name
@@ -497,6 +565,23 @@ class ChatApp {
     }
   }
 
+  async getAgentsJSON() {
+    try {
+      const response = await fetch("/api/v1/agents", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      console.log("Adding agents JSON");
+      let provObj = await response.json();
+      this.userAgentsData = provObj;
+      this.addAgents();
+    } catch (error) {
+      this.addErrorMessage("Sorry, I encountered an error: " + error.message);
+      console.log("Error status: " + error.message);
+    }
+  }
   async updateModel(elem) {
     if (elem) {
       console.log("Provider changed: " + elem.target.value);
@@ -821,4 +906,5 @@ document.addEventListener("DOMContentLoaded", () => {
   app.getProvidersJSON();
   app.getContextJSON();
   app.getThreadsJSON();
+  app.getAgentsJSON();
 });

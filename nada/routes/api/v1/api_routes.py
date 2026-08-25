@@ -35,7 +35,9 @@ async def json_agent_providers(request: Request, current_user: Annotated[UserInD
 
     """
     if isinstance(current_user, UserInDB):
-
+        caps = agents_available.agent_providers['pydantic-ai'].capabilities.capabilities.values()
+        for c in caps:
+            logger.info(f'Capabilities: {dir(c.get_tool())}')
         return agents_available.agent_providers
 
 
