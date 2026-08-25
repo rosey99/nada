@@ -115,6 +115,6 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
-templates = Jinja2Templates(directory=PARENT_DIR_PATH + "/fastapi_agent/chat_ui/templates")
+templates = Jinja2Templates(directory=PARENT_DIR_PATH + "/chat_ui/templates")
 
 providers = load_providers()

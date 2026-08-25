@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from pydantic_ai import RunContext, RunUsage, BinaryContent
 from pydantic_ai.models import Model
 
-from nada.fastapi_agent.agents import AIAgent
+from nada.agents.common import AIAgent
 from nada.fastapi_agent.fastapi_discovery import FastAPIDiscovery
 from nada.llm.common.provider import ProviderCollection
 from nada.models import APIResponse, BaseModelData
