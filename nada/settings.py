@@ -7,7 +7,7 @@ from slugify import slugify
 from nada import PARENT_DIR_PATH, ROOT_DIR_PATH
 
 from nada.llm.common.provider import ProviderCollection
-
+from nada.tools.planner import AgentCollection, agent_providers
 import logging
 import json
 
@@ -67,6 +67,10 @@ def load_providers():
         raise RuntimeError(f"No valid provider and model configuration found at {config_path}")
     return providers
 
+def load_agents():
+    agents = AgentCollection(agent_providers)
+    print(dir(agents))
+    return agents
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -118,3 +122,4 @@ settings = Settings()
 templates = Jinja2Templates(directory=PARENT_DIR_PATH + "/chat_ui/templates")
 
 providers = load_providers()
+agents_available = load_agents()
