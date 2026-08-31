@@ -1,15 +1,18 @@
 # Nada
 ## Not Another Diminutive Agent
-A distributed async agent orchestration system built with Docker, Python, FastAPI, Pydantic AI, and Celery. Essentially a research project, and absolutely not ready for prime time. Here nonetheless as it might be helpful to others who are interested in evaluating (in particular) open source LLMs, agent frameworks, and LLM orchestration/performance. At the moment, only OpenAI compatible (Llama.cpp, Ollama, etc.) providers, along with Openrouter are supported.
+Nada is a distributed async agent orchestration system built with Docker, Python, FastAPI, Pydantic AI, Celery and Redis.  At the moment, only OpenAI compatible (Llama.cpp, Ollama, etc.) providers, along with Openrouter are supported.
+
+Basically a test harness at this point, built to test the proposition that the app could then be used to generate usable code for itself. And to benchmark results and performance for various (small-ish) open source models for actual day-to-day development work. Certain pieces, including this document, are the work of small Qwen models running on an old laptop. Totally sufficient for many tasks and agent tools, IMHO. In addition, an attempt to push Redis to its limits in an effort to keep things small and do without an RDBMS at least for now.
+
+Absolutely not production code!  This is essentially a research project, and thrown together from various sources, and in great haste. Here nonetheless as it might be helpful to others who are interested in evaluating (in particular) open source LLMs, agent frameworks, and LLM orchestration/performance. 
 
 ## 🚀 Overview
-The problem: How to best (or at least, not worst) break multi-step workflows into discrete steps, with repeatability and full audit along the way, and employing the minimal toolset for each step. How do we add checkpoints, and make use of the right LLM for the job? And how might this be accomplished without the risks and potential costs of something like an iterative ReAct loop? Linear regression machines (like LLMs) for any problem with a relatively long horizon carry substantial risks of error amplification downstream, combined with a complete inability to self-correct along the way. How do we find a balance? Let's find out. 
+The problem: How to best (or at least, not worst) break multi-step workflows into discrete steps, with repeatability and full audit along the way, and employing the minimal toolset for each step. How do we add checkpoints, and make use of the right LLM for the job? And how might this be accomplished without the risks and potential costs of something like an iterative ReAct loop? Linear regression machines (like LLMs) for any problem with a relatively long horizon carry risks of error amplification downstream, combined with a an inability to self-correct along the way. How do we find a balance? Let's find out. 
 
 Essentially a fork (with gratitude!) of https://github.com/blairhudson/fastapi-agents, repurposed as an agent and LLM orchestration tool. Built to provide a sufficiently powerful agent that is not confined to either a console or an IDE, and that can offload long-running workloads to a lightweight async worker pool. More capabilities are coming (soon) with truly async execution, multi-step planning, Redis for cache, memory, and semantic search, as well as comprehensive LLM/agent metrics.    
 
 Nada is a framework for building and managing AI agents that can interact with FastAPI applications and perform various tasks including web search, file system operations, and API calls (so far), using the Pydantic AI capabilities system.
 
-Basically a test harness at this point, built to test the proposition that the app could then be used to generate usable code for itself. And to benchmark results and performance for various (small-ish) open source models, for actual day-to-day development work. Certain pieces, including this document, are the work of Qwen3.5 4B running on an old laptop. Totally sufficient for many tasks and agent tools, IMHO.
 
 ## 📋 Features
 
